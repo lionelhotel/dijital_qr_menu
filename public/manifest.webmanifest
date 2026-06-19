@@ -1,0 +1,16 @@
+{
+  "name": "Lionel Hotel Istanbul Menu",
+  "short_name": "Lionel Menu",
+  "start_url": "/menu",
+  "display": "standalone",
+  "background_color": "#F7F4EE",
+  "theme_color": "#A8844F",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

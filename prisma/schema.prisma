@@ -1,0 +1,376 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  MENU_MANAGER
+  EDITOR
+}
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  PRICE_CHANGE
+  ROLE_CHANGE
+  SETTINGS_CHANGE
+}
+
+enum MediaKind {
+  IMAGE
+  DOCUMENT
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  username     String     @unique
+  passwordHash String
+  role         UserRole   @default(EDITOR)
+  isActive     Boolean    @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+  sessions     Session[]
+  auditLogs    AuditLog[]
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  key         UserRole @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Language {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BusinessSetting {
+  id              String   @id @default(cuid())
+  businessName    String
+  venueName       String
+  logoUrl         String?
+  faviconUrl      String?
+  coverImageUrl   String?
+  phone           String?
+  email           String?
+  website         String?
+  address         Json?
+  instagram       String?
+  wifiInfo        String?
+  defaultCurrency String   @default("TRY")
+  taxIncluded     Boolean  @default(true)
+  serviceText     Json?
+  footerText      Json?
+  allergenNotice  Json?
+  openingHours    Json?
+  googleMapsUrl   String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+}
+
+model ThemeSetting {
+  id              String   @id @default(cuid())
+  primaryColor    String   @default("#2B2926")
+  accentColor     String   @default("#A8844F")
+  backgroundColor String   @default("#F7F4EE")
+  cardColor       String   @default("#FFFFFF")
+  textColor       String   @default("#2B2926")
+  headingFont     String   @default("Georgia")
+  bodyFont        String   @default("Inter")
+  radius          Int      @default(8)
+  cardShadow      Boolean  @default(true)
+  categoryView    String   @default("tabs")
+  productView     String   @default("grid")
+  showCoverImage  Boolean  @default(true)
+  darkModeEnabled Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+}
+
+model Category {
+  id           String                @id @default(cuid())
+  parentId     String?
+  parent       Category?             @relation("CategoryTree", fields: [parentId], references: [id])
+  children     Category[]            @relation("CategoryTree")
+  slug         String                @unique
+  imageUrl     String?
+  icon         String?
+  sortOrder    Int                   @default(0)
+  isActive     Boolean               @default(true)
+  startTime    String?
+  endTime      String?
+  publishStart DateTime?
+  publishEnd   DateTime?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  createdBy    String?
+  updatedBy    String?
+  deletedAt    DateTime?
+  translations CategoryTranslation[]
+  products     Product[]
+
+  @@index([parentId])
+  @@index([sortOrder])
+}
+
+model CategoryTranslation {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale      String
+  name        String
+  description String?
+  slug        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([categoryId, locale])
+  @@unique([locale, slug])
+}
+
+model Product {
+  id              String              @id @default(cuid())
+  categoryId      String
+  category        Category            @relation(fields: [categoryId], references: [id])
+  price           Decimal             @db.Decimal(10, 2)
+  discountPrice   Decimal?            @db.Decimal(10, 2)
+  currency        String              @default("TRY")
+  portion         String?
+  calories        Int?
+  prepMinutes     Int?
+  spicyLevel      Int                 @default(0)
+  mainImageUrl    String?
+  isActive        Boolean             @default(true)
+  isAvailable     Boolean             @default(true)
+  isFeatured      Boolean             @default(false)
+  isNew           Boolean             @default(false)
+  sortOrder       Int                 @default(0)
+  publishStart    DateTime?
+  publishEnd      DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  createdBy       String?
+  updatedBy       String?
+  deletedAt       DateTime?
+  translations    ProductTranslation[]
+  images          ProductImage[]
+  allergens       ProductAllergen[]
+  dietaryTags     ProductDietaryTag[]
+  productViews    ProductView[]
+
+  @@index([categoryId])
+  @@index([isActive, isAvailable])
+}
+
+model ProductTranslation {
+  id                 String   @id @default(cuid())
+  productId          String
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locale             String
+  name               String
+  shortDescription   String?
+  detailedDescription String?
+  ingredients        String?
+  slug               String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([productId, locale])
+  @@unique([locale, slug])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       Json?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Allergen {
+  id           String                @id @default(cuid())
+  key          String                @unique
+  icon         String
+  isActive     Boolean               @default(true)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  deletedAt    DateTime?
+  translations AllergenTranslation[]
+  products     ProductAllergen[]
+}
+
+model AllergenTranslation {
+  id          String   @id @default(cuid())
+  allergenId  String
+  allergen    Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+  locale      String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([allergenId, locale])
+}
+
+model DietaryTag {
+  id           String                  @id @default(cuid())
+  key          String                  @unique
+  icon         String
+  isActive     Boolean                 @default(true)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  deletedAt    DateTime?
+  translations DietaryTagTranslation[]
+  products     ProductDietaryTag[]
+}
+
+model DietaryTagTranslation {
+  id          String     @id @default(cuid())
+  dietaryId   String
+  dietaryTag  DietaryTag @relation(fields: [dietaryId], references: [id], onDelete: Cascade)
+  locale      String
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([dietaryId, locale])
+}
+
+model ProductAllergen {
+  productId  String
+  allergenId String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  allergen   Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([productId, allergenId])
+}
+
+model ProductDietaryTag {
+  productId String
+  dietaryId String
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  dietary   DietaryTag @relation(fields: [dietaryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, dietaryId])
+}
+
+model QrCode {
+  id        String   @id @default(cuid())
+  name      String
+  targetUrl String
+  location  String?
+  isActive  Boolean  @default(true)
+  scanCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+  deletedAt DateTime?
+}
+
+model MenuView {
+  id        String   @id @default(cuid())
+  locale    String
+  location  String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([locale])
+  @@index([createdAt])
+}
+
+model ProductView {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locale    String
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  userId       String?
+  user         User?       @relation(fields: [userId], references: [id])
+  action       AuditAction
+  resourceType String
+  resourceId   String?
+  oldValue     Json?
+  newValue     Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime    @default(now())
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  kind         MediaKind @default(IMAGE)
+  originalName String
+  fileName     String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  url          String
+  alt          Json?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  createdBy    String?
+  updatedBy    String?
+  deletedAt    DateTime?
+}

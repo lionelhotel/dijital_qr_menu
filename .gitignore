@@ -1,0 +1,14 @@
+node_modules
+.npm-cache
+.next
+.env
+.env*.local
+!.env.example
+storage/uploads/*
+!storage/uploads/.gitkeep
+coverage
+playwright-report
+test-results
+*.log
+dev-server*.log
+tsconfig.tsbuildinfo
