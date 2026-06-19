@@ -1,0 +1,14 @@
+.env
+.env*.local
+.git
+.next
+.npm-cache
+node_modules
+coverage
+playwright-report
+test-results
+*.log
+dev-server*.log
+tsconfig.tsbuildinfo
+storage/uploads/*
+!storage/uploads/.gitkeep
