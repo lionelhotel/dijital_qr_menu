@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: qr_menu
       POSTGRES_USER: qr_menu
-      POSTGRES_PASSWORD: $$v%SGXVraH6
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-database-password}
     ports:
       - "5432:5432"
     volumes:
@@ -17,15 +17,16 @@ services:
     depends_on:
       - postgres
     environment:
-      DATABASE_URL: postgresql://qr_menu:$$v%SGXVraH6@postgres:5432/qr_menu?schema=public
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
-      ADMIN_PATH: /admin
-      SESSION_SECRET: hsWK6Pu4LB4xBHtCiSMfctFNZYYYdseNtMUgy6rrJDMjiP4x
-      SEED_ADMIN_EMAIL: bilgisilem@lionelhotel.com.tr
-      SEED_ADMIN_USERNAME: admin
-      SEED_ADMIN_PASSWORD: "Lionel!1907."
+      DATABASE_URL: postgresql://qr_menu:${POSTGRES_PASSWORD:-change-this-database-password}@postgres:5432/qr_menu?schema=public
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      ADMIN_PATH: ${ADMIN_PATH:-/admin}
+      SESSION_SECRET: ${SESSION_SECRET:-change-this-to-a-long-random-secret}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@example.com}
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-change-me-before-production}
+      RUN_SEED: ${RUN_SEED:-true}
       UPLOAD_DIR: /app/storage/uploads
-      MAX_UPLOAD_MB: 4
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-4}
     ports:
       - "3000:3000"
     volumes:
