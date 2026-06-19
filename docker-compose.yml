@@ -17,7 +17,7 @@ services:
     depends_on:
       - postgres
     environment:
-      DATABASE_URL: postgresql://qr_menu:${POSTGRES_PASSWORD:-change-this-database-password}@postgres:5432/qr_menu?schema=public
+      DATABASE_URL: ${DATABASE_URL:-postgresql://qr_menu:change-this-database-password@postgres:5432/qr_menu?schema=public}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       ADMIN_PATH: ${ADMIN_PATH:-/admin}
       SESSION_SECRET: ${SESSION_SECRET:-change-this-to-a-long-random-secret}
