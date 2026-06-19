@@ -98,8 +98,8 @@ export function MenuExperience({ locale, business, categories }: MenuExperienceP
         </div>
       </header>
 
-      <section className="relative mx-auto max-w-6xl px-4 pt-6">
-        <div className="relative min-h-[280px] overflow-hidden rounded-lg bg-primary text-primary-foreground">
+      <section className="relative mx-auto max-w-6xl px-4 pt-4 sm:pt-6">
+        <div className="relative min-h-[190px] overflow-hidden rounded-lg bg-primary text-primary-foreground sm:min-h-[280px]">
           <Image
             src={
               business.coverImageUrl ??
@@ -112,16 +112,57 @@ export function MenuExperience({ locale, business, categories }: MenuExperienceP
             sizes="(max-width: 768px) 100vw, 1100px"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/45 to-transparent" />
-          <div className="absolute bottom-0 max-w-2xl p-6 sm:p-8">
-            <h1 className="font-serif text-4xl leading-tight sm:text-5xl">{business.businessName}</h1>
-            <p className="mt-2 text-lg text-primary-foreground/90">{business.venueName}</p>
-            <p className="mt-5 max-w-xl text-base text-primary-foreground/90">{t(locale, "welcome")}</p>
-            <p className="text-sm text-primary-foreground/75">{t(locale, "welcomeSub")}</p>
+          <div className="absolute bottom-0 max-w-2xl p-4 sm:p-8">
+            <h1 className="font-serif text-3xl leading-tight sm:text-5xl">{business.businessName}</h1>
+            <p className="mt-1 text-base text-primary-foreground/90 sm:mt-2 sm:text-lg">{business.venueName}</p>
+            <p className="mt-3 max-w-xl text-sm text-primary-foreground/90 sm:mt-5 sm:text-base">{t(locale, "welcome")}</p>
+            <p className="hidden text-sm text-primary-foreground/75 sm:block">{t(locale, "welcomeSub")}</p>
           </div>
         </div>
       </section>
 
-      <section className="sticky top-[69px] z-20 border-b border-border bg-background/95 backdrop-blur">
+      <section className="sticky top-[69px] z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
+        <div className="space-y-3">
+          <select
+            value={activeCategory}
+            onChange={(event) => setActiveCategory(event.target.value)}
+            aria-label="Kategori"
+            className="h-11 w-full rounded-md border border-input bg-card px-3 text-sm font-medium outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="all">{t(locale, "all")}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.label}
+              </option>
+            ))}
+          </select>
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t(locale, "search")}
+              className="h-11 pl-10"
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {quickFilters.map(({ key, label, icon: Icon }) => (
+              <Button
+                key={key}
+                type="button"
+                variant={filters.includes(key) ? "accent" : "outline"}
+                onClick={() => toggleFilter(key)}
+                className="h-9 justify-start px-3"
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{label}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="sticky top-[69px] z-20 hidden border-b border-border bg-background/95 backdrop-blur sm:block">
         <div className="mx-auto max-w-6xl px-4 py-3">
           <div className="flex gap-2 overflow-x-auto pb-1">
             <Button
@@ -147,7 +188,7 @@ export function MenuExperience({ locale, business, categories }: MenuExperienceP
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-5">
+      <section className="mx-auto hidden max-w-6xl px-4 py-5 sm:block">
         <div className="flex flex-col gap-3 sm:flex-row">
           <label className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -175,15 +216,15 @@ export function MenuExperience({ locale, business, categories }: MenuExperienceP
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-2 sm:gap-4 sm:py-0 lg:grid-cols-3">
         {filteredProducts.map((product) => (
           <button
             key={product.id}
             type="button"
             onClick={() => setSelected(product)}
-            className="group overflow-hidden rounded-lg border border-border bg-card text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg"
+            className="group flex overflow-hidden rounded-lg border border-border bg-card text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg sm:block"
           >
-            <div className="relative aspect-[4/3] bg-muted">
+            <div className="relative h-28 w-28 shrink-0 bg-muted sm:h-auto sm:w-full sm:aspect-[4/3]">
               <Image
                 src={product.mainImageUrl ?? "/placeholders/food.svg"}
                 alt={product.name}
@@ -192,21 +233,23 @@ export function MenuExperience({ locale, business, categories }: MenuExperienceP
                 className="object-cover transition group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, 33vw"
               />
-              <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+              <div className="absolute left-2 top-2 hidden flex-wrap gap-2 sm:flex sm:left-3 sm:top-3">
                 {product.isFeatured ? <Badge>{t(locale, "featured")}</Badge> : null}
                 {product.isNew ? <Badge>{t(locale, "new")}</Badge> : null}
                 {!product.isAvailable ? <Badge>{t(locale, "unavailable")}</Badge> : null}
               </div>
             </div>
-            <div className="space-y-3 p-4">
+            <div className="min-w-0 flex-1 space-y-2 p-3 sm:space-y-3 sm:p-4">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="font-serif text-xl leading-tight">{product.name}</h2>
-                <p className="shrink-0 font-semibold text-accent">
+                <h2 className="line-clamp-2 font-serif text-base leading-tight sm:text-xl">{product.name}</h2>
+                <p className="shrink-0 text-sm font-semibold text-accent sm:text-base">
                   {formatPrice(product.price, product.currency, locale === "tr" ? "tr-TR" : locale)}
                 </p>
               </div>
-              <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{product.shortDescription}</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="line-clamp-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">{product.shortDescription}</p>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {product.isFeatured ? <MobileBadge>{t(locale, "featured")}</MobileBadge> : null}
+                {product.isNew ? <MobileBadge>{t(locale, "new")}</MobileBadge> : null}
                 {product.spicyLevel > 0 ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
                     <Flame className="h-3 w-3 text-destructive" />
@@ -280,6 +323,10 @@ export function MenuExperience({ locale, business, categories }: MenuExperienceP
 
 function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md bg-card/95 px-2 py-1 text-xs font-medium text-primary shadow-sm">{children}</span>;
+}
+
+function MobileBadge({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-md bg-accent/10 px-2 py-1 text-xs font-medium text-accent sm:hidden">{children}</span>;
 }
 
 function Detail({ title, value }: { title: string; value: string }) {
