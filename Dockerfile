@@ -32,7 +32,8 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN mkdir -p /app/storage/uploads && chown -R nextjs:nodejs /app/storage
+RUN mkdir -p /app/storage/uploads /app/.next/cache \
+  && chown -R nextjs:nodejs /app/storage /app/.next
 RUN chmod +x /app/docker-entrypoint.sh
 RUN rm -f /app/.env
 USER nextjs
