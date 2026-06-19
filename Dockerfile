@@ -1,9 +1,12 @@
-FROM node:22-bookworm AS deps
+FROM node:20-bookworm AS deps
 WORKDIR /app
+ENV NPM_CONFIG_AUDIT=false
+ENV NPM_CONFIG_FUND=false
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci --no-audit --no-fund
 
-FROM node:22-bookworm AS builder
+FROM node:20-bookworm AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
@@ -11,7 +14,7 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:22-bookworm AS runner
+FROM node:20-bookworm AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
