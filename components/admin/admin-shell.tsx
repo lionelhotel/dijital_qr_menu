@@ -1,21 +1,8 @@
-import Link from "next/link";
-import { LogOut, LayoutDashboard, Utensils, Tags, ImageIcon, QrCode, Users, Settings, ScrollText } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
 import { getAdminPath } from "@/lib/auth/session";
+import { AdminNav } from "@/components/admin/admin-nav";
 import { Button } from "@/components/ui/button";
-
-const nav = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/categories", label: "Kategoriler", icon: Tags },
-  { href: "/admin/products", label: "Ürünler", icon: Utensils },
-  { href: "/admin/allergens", label: "Alerjenler", icon: Tags },
-  { href: "/admin/tags", label: "Diyet Etiketleri", icon: Tags },
-  { href: "/admin/media", label: "Medya", icon: ImageIcon },
-  { href: "/admin/qr-codes", label: "QR Kodlar", icon: QrCode },
-  { href: "/admin/users", label: "Kullanıcılar", icon: Users },
-  { href: "/admin/settings", label: "Ayarlar", icon: Settings },
-  { href: "/admin/audit-logs", label: "İşlem Kayıtları", icon: ScrollText }
-];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const adminPath = getAdminPath();
@@ -27,18 +14,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <p className="text-sm text-muted-foreground">Lionel Hotel Istanbul</p>
           <h1 className="font-serif text-2xl">QR Menü Yönetimi</h1>
         </div>
-        <nav className="space-y-1">
-          {nav.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={`${adminPath}${href.replace(/^\/admin/, "")}`}
-              className="flex h-10 items-center gap-3 rounded-md px-3 text-sm transition hover:bg-muted"
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </Link>
-          ))}
-        </nav>
+        <AdminNav adminPath={adminPath} />
         <form action={logoutAction} className="absolute bottom-4 left-4 right-4">
           <Button type="submit" variant="outline" className="w-full">
             <LogOut className="h-4 w-4" />
