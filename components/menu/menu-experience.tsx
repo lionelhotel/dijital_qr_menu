@@ -61,7 +61,6 @@ const quickFilters = [
 
 export function MenuExperience({ locale, business, categories, menuTitle, menuDescription, menuImageUrl }: MenuExperienceProps) {
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [filters, setFilters] = useState<string[]>([]);
   const [selected, setSelected] = useState<Product | null>(null);
 
@@ -74,13 +73,12 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
   const filteredProducts = products.filter((product) => {
     const text = `${product.name} ${product.shortDescription ?? ""} ${product.ingredients ?? ""}`.toLowerCase();
     const matchesQuery = !query || text.includes(query.toLowerCase());
-    const matchesCategory = activeCategory === "all" || product.categoryId === activeCategory;
     const matchesFilters = filters.every((filter) => {
       if (filter === "available") return product.isAvailable;
       if (filter === "chef") return product.isFeatured;
       return product.dietaryTags.some((tag) => tag.key === filter);
     });
-    return matchesQuery && matchesCategory && matchesFilters;
+    return matchesQuery && matchesFilters;
   });
 
   function toggleFilter(key: string) {
@@ -136,19 +134,6 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
 
       <section className="sticky top-[69px] z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
         <div className="space-y-3">
-          <select
-            value={activeCategory}
-            onChange={(event) => setActiveCategory(event.target.value)}
-            aria-label="Kategori"
-            className="h-11 w-full rounded-md border border-input bg-card px-3 text-sm font-medium outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="all">{t(locale, "all")}</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.label}
-              </option>
-            ))}
-          </select>
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -169,32 +154,6 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 <span className="truncate">{label}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="sticky top-[69px] z-20 hidden border-b border-border bg-background/95 backdrop-blur sm:block">
-        <div className="mx-auto max-w-6xl px-4 py-3">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <Button
-              type="button"
-              variant={activeCategory === "all" ? "accent" : "outline"}
-              onClick={() => setActiveCategory("all")}
-              className="shrink-0"
-            >
-              {t(locale, "all")}
-            </Button>
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                type="button"
-                variant={activeCategory === category.id ? "accent" : "outline"}
-                onClick={() => setActiveCategory(category.id)}
-                className="shrink-0"
-              >
-                {category.label}
               </Button>
             ))}
           </div>
