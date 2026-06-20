@@ -17,6 +17,7 @@ export async function getMenuData(locale: Locale) {
           orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
           include: {
             translations: true,
+            menus: true,
             allergens: {
               include: { allergen: { include: { translations: true } } }
             },
@@ -57,8 +58,57 @@ export async function getMenuData(locale: Locale) {
   };
 }
 
-export async function getCategoryMenuData(locale: Locale, slug: string) {
+export async function getPublicMenus(locale: Locale) {
+  const [business, theme, menus] = await Promise.all([
+    prisma.businessSetting.findFirst({ where: { isActive: true }, orderBy: { createdAt: "asc" } }),
+    prisma.themeSetting.findFirst({ where: { isActive: true }, orderBy: { createdAt: "asc" } }),
+    prisma.menu.findMany({
+      where: { isActive: true, deletedAt: null },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      include: { translations: true, products: true }
+    })
+  ]);
+
+  return {
+    business,
+    theme,
+    menus: menus.map((menu) => ({
+      ...menu,
+      label: pick(menu.translations, locale, "name"),
+      description: pick(menu.translations, locale, "description"),
+      localizedSlug: pick(menu.translations, locale, "slug") ?? menu.slug
+    }))
+  };
+}
+
+export async function getMenuCategories(locale: Locale, menuSlug: string) {
+  const [menuData, data] = await Promise.all([getPublicMenus(locale), getMenuData(locale)]);
+  const menu =
+    menuData.menus.find((item) => item.slug === menuSlug || item.localizedSlug === menuSlug) ??
+    menuData.menus.find((item) => item.translations.some((translation) => translation.slug === menuSlug));
+  if (!menu) return null;
+
+  const categories = data.categories
+    .map((category) => ({
+      ...category,
+      products: category.products.filter((product) => product.menus.some((item) => item.menuId === menu.id))
+    }))
+    .filter((category) => !category.parentId && countProductsForCategory(data.categories, category.id, menu.id) > 0);
+
+  return {
+    business: data.business,
+    theme: data.theme,
+    menu,
+    categories: categories.map((category) => ({
+      ...category,
+      productCount: countProductsForCategory(data.categories, category.id, menu.id)
+    }))
+  };
+}
+
+export async function getCategoryMenuData(locale: Locale, slug: string, menuSlug?: string) {
   const data = await getMenuData(locale);
+  const menu = menuSlug ? (await getMenuCategories(locale, menuSlug))?.menu : null;
   const category =
     data.categories.find((item) => item.slug === slug) ??
     data.categories.find((item) => item.translations.some((translation) => translation.locale === locale && translation.slug === slug)) ??
@@ -67,11 +117,17 @@ export async function getCategoryMenuData(locale: Locale, slug: string) {
   if (!category) return null;
 
   const categoryIds = collectCategoryIds(data.categories, category.id);
-  const categories = data.categories.filter((item) => categoryIds.includes(item.id));
+  const categories = data.categories
+    .filter((item) => categoryIds.includes(item.id))
+    .map((item) => ({
+      ...item,
+      products: menu ? item.products.filter((product) => product.menus.some((relation) => relation.menuId === menu.id)) : item.products
+    }));
 
   return {
     business: data.business,
     theme: data.theme,
+    menu,
     category,
     categories
   };
@@ -164,4 +220,15 @@ function collectCategoryIds(categories: { id: string; parentId: string | null }[
   }
 
   return ids;
+}
+
+function countProductsForCategory(
+  categories: { id: string; parentId: string | null; products: { menus: { menuId: string }[] }[] }[],
+  rootId: string,
+  menuId: string
+) {
+  const ids = collectCategoryIds(categories, rootId);
+  return categories
+    .filter((category) => ids.includes(category.id))
+    .reduce((total, category) => total + category.products.filter((product) => product.menus.some((item) => item.menuId === menuId)).length, 0);
 }

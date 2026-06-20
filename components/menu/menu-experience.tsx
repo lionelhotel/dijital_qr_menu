@@ -50,6 +50,7 @@ type MenuExperienceProps = {
   menuTitle?: string | null;
   menuDescription?: string | null;
   menuImageUrl?: string | null;
+  backHref?: string;
 };
 
 const quickFilters = [
@@ -59,7 +60,7 @@ const quickFilters = [
   { key: "available", label: "Mevcut", icon: BadgeCheck }
 ];
 
-export function MenuExperience({ locale, business, categories, menuTitle, menuDescription, menuImageUrl }: MenuExperienceProps) {
+export function MenuExperience({ locale, business, categories, menuTitle, menuDescription, menuImageUrl, backHref }: MenuExperienceProps) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<string[]>([]);
   const [selected, setSelected] = useState<Product | null>(null);
@@ -117,7 +118,7 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
           <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/45 to-transparent" />
           <div className="absolute bottom-0 max-w-2xl p-4 sm:p-8">
             <Link
-              href={`/${locale}/menu`}
+              href={backHref ?? `/${locale}/menu`}
               className="mb-3 inline-flex items-center gap-2 rounded-md bg-card/95 px-3 py-2 text-sm font-medium text-primary"
             >
               <ChevronLeft className="h-4 w-4" />

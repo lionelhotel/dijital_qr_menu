@@ -1,12 +1,12 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/lib/i18n/config";
-import { getCategoryMenuData, trackMenuView } from "@/lib/menu/queries";
-import { MenuExperience } from "@/components/menu/menu-experience";
+import { getMenuCategories, trackMenuView } from "@/lib/menu/queries";
+import { MenuHome } from "@/components/menu/menu-home";
 
 export const dynamic = "force-dynamic";
 
-export default async function CategoryMenuPage({
+export default async function SelectedMenuPage({
   params,
   searchParams
 }: {
@@ -18,46 +18,28 @@ export default async function CategoryMenuPage({
   if (!isLocale(locale)) notFound();
 
   const headerStore = await headers();
-  const data = await getCategoryMenuData(locale, slug);
+  const data = await getMenuCategories(locale, slug);
   if (!data) notFound();
 
   await trackMenuView(locale, query.location, headerStore.get("user-agent"));
 
   return (
-    <MenuExperience
+    <MenuHome
       locale={locale}
+      basePath={`/${locale}/menu/${slug}`}
       business={{
-        businessName: data.business?.businessName ?? "Lionel Hotel Istanbul",
+        businessName: data.menu.label ?? "Menu",
         venueName: data.business?.venueName ?? "Restaurant & Bar",
         logoUrl: data.business?.logoUrl,
-        coverImageUrl: data.business?.coverImageUrl
+        coverImageUrl: data.menu.imageUrl ?? data.business?.coverImageUrl
       }}
-      menuTitle={data.category.label}
-      menuDescription={data.category.description}
-      menuImageUrl={data.category.imageUrl}
       categories={data.categories.map((category) => ({
         id: category.id,
-        slug: category.slug,
+        slug: category.translations.find((translation) => translation.locale === locale)?.slug ?? category.slug,
         label: category.label,
         description: category.description,
-        products: category.products.map((product) => ({
-          id: product.id,
-          name: product.name ?? "",
-          shortDescription: product.shortDescription,
-          detailedDescription: product.detailedDescription,
-          ingredients: product.ingredients,
-          price: product.price.toString(),
-          currency: product.currency,
-          portion: product.portion,
-          calories: product.calories,
-          spicyLevel: product.spicyLevel,
-          mainImageUrl: product.mainImageUrl,
-          isAvailable: product.isAvailable,
-          isFeatured: product.isFeatured,
-          isNew: product.isNew,
-          allergens: product.allergens,
-          dietaryTags: product.dietaryTags
-        }))
+        imageUrl: category.imageUrl,
+        productCount: category.productCount
       }))}
     />
   );

@@ -1,11 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { ImageIcon, LayoutDashboard, QrCode, ScrollText, Settings, Tags, Users, Utensils } from "lucide-react";
+import { ImageIcon, LayoutDashboard, MenuSquare, QrCode, ScrollText, Settings, Tags, Users, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/menus", label: "Menüler", icon: MenuSquare },
   { href: "/categories", label: "Kategoriler", icon: Tags },
   { href: "/products", label: "Ürünler", icon: Utensils },
   { href: "/allergens", label: "Alerjenler", icon: Tags },

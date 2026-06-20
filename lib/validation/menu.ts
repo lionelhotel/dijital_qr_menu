@@ -9,13 +9,26 @@ export const localizedTextSchema = z.object({
 export const categorySchema = z.object({
   name: localizedTextSchema,
   description: z.object({
-    tr: z.string().trim().optional(),
-    en: z.string().trim().optional(),
-    es: z.string().trim().optional()
+    tr: z.string().trim().default(""),
+    en: z.string().trim().default(""),
+    es: z.string().trim().default("")
   }),
-  parentId: z.string().optional().nullable(),
+  parentId: z.string().nullable().default(null),
   slug: z.string().trim().min(2),
-  imageUrl: z.string().url().optional().or(z.literal("")),
+  imageUrl: z.string().url().or(z.literal("")).default(""),
+  sortOrder: z.coerce.number().int().default(0),
+  isActive: z.coerce.boolean().default(true)
+});
+
+export const menuSchema = z.object({
+  name: localizedTextSchema,
+  description: z.object({
+    tr: z.string().trim().default(""),
+    en: z.string().trim().default(""),
+    es: z.string().trim().default("")
+  }),
+  slug: z.string().trim().min(2),
+  imageUrl: z.string().url().or(z.literal("")).default(""),
   sortOrder: z.coerce.number().int().default(0),
   isActive: z.coerce.boolean().default(true)
 });
@@ -24,6 +37,12 @@ export const productSchema = z.object({
   categoryId: z.string().min(1),
   name: localizedTextSchema,
   shortDescription: localizedTextSchema,
+  ingredients: z.object({
+    tr: z.string().trim().default(""),
+    en: z.string().trim().default(""),
+    es: z.string().trim().default("")
+  }),
+  imageUrl: z.string().url().or(z.literal("")).default(""),
   price: z.coerce.number().positive(),
   currency: z.string().default("TRY"),
   spicyLevel: z.coerce.number().int().min(0).max(5).default(0),

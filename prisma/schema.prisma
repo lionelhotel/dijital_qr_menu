@@ -156,6 +156,38 @@ model Category {
   @@index([sortOrder])
 }
 
+model Menu {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  imageUrl     String?
+  sortOrder    Int           @default(0)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  createdBy    String?
+  updatedBy    String?
+  deletedAt    DateTime?
+  translations MenuTranslation[]
+  products     ProductMenu[]
+
+  @@index([sortOrder])
+}
+
+model MenuTranslation {
+  id          String   @id @default(cuid())
+  menuId      String
+  menu        Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  locale      String
+  name        String
+  description String?
+  slug        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([menuId, locale])
+  @@unique([locale, slug])
+}
+
 model CategoryTranslation {
   id          String   @id @default(cuid())
   categoryId  String
@@ -199,6 +231,7 @@ model Product {
   images          ProductImage[]
   allergens       ProductAllergen[]
   dietaryTags     ProductDietaryTag[]
+  menus           ProductMenu[]
   productViews    ProductView[]
 
   @@index([categoryId])
@@ -300,6 +333,15 @@ model ProductDietaryTag {
   dietary   DietaryTag @relation(fields: [dietaryId], references: [id], onDelete: Cascade)
 
   @@id([productId, dietaryId])
+}
+
+model ProductMenu {
+  productId String
+  menuId    String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  menu      Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@id([productId, menuId])
 }
 
 model QrCode {

@@ -175,6 +175,35 @@ async function main() {
     await upsertCategoryTranslations(category.id, names);
   }
 
+  const menus = [
+    [
+      "restaurant-menu",
+      ["Restaurant Menü", "Restaurant Menu", "Menú Restaurante"],
+      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "room-service-menu",
+      ["Oda Servisi Menü", "Room Service Menu", "Menú Servicio a la Habitación"],
+      "https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "lobby-bar-menu",
+      ["Lobby Bar Menü", "Lobby Bar Menu", "Menú Lobby Bar"],
+      "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1400&q=80"
+    ]
+  ] as const;
+
+  const menuMap = new Map<string, string>();
+  for (const [index, [slug, names, imageUrl]] of menus.entries()) {
+    const menu = await prisma.menu.upsert({
+      where: { slug },
+      update: { sortOrder: index, imageUrl },
+      create: { slug, sortOrder: index, imageUrl }
+    });
+    menuMap.set(slug, menu.id);
+    await upsertMenuTranslations(menu.id, names);
+  }
+
   const productSeed = [
     {
       category: "soups",
@@ -188,7 +217,8 @@ async function main() {
       allergens: ["gluten"],
       tags: ["vegetarian"],
       image:
-        "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu"]
     },
     {
       category: "salads",
@@ -202,7 +232,8 @@ async function main() {
       allergens: ["gluten", "milk", "egg"],
       tags: [],
       image:
-        "https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu"]
     },
     {
       category: "main-courses",
@@ -217,6 +248,7 @@ async function main() {
       tags: ["chef"],
       image:
         "https://images.unsplash.com/photo-1485921325833-c519f76c4927?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu"],
       featured: true
     },
     {
@@ -232,6 +264,7 @@ async function main() {
       tags: ["chef"],
       image:
         "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu"],
       featured: true
     },
     {
@@ -247,6 +280,7 @@ async function main() {
       tags: ["vegan", "spicy"],
       image:
         "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu"],
       spicyLevel: 3
     },
     {
@@ -261,7 +295,8 @@ async function main() {
       allergens: ["gluten", "milk", "egg"],
       tags: [],
       image:
-        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu", "lobby-bar-menu"]
     },
     {
       category: "desserts",
@@ -276,6 +311,7 @@ async function main() {
       tags: ["new"],
       image:
         "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu", "lobby-bar-menu"],
       isNew: true
     },
     {
@@ -290,7 +326,8 @@ async function main() {
       allergens: ["gluten", "milk", "egg"],
       tags: ["local"],
       image:
-        "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu"]
     },
     {
       category: "hot-beverages",
@@ -304,7 +341,8 @@ async function main() {
       allergens: [],
       tags: ["local"],
       image:
-        "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu", "lobby-bar-menu"]
     },
     {
       category: "hot-beverages",
@@ -318,7 +356,8 @@ async function main() {
       allergens: ["milk"],
       tags: [],
       image:
-        "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu", "lobby-bar-menu"]
     },
     {
       category: "cold-beverages",
@@ -332,7 +371,8 @@ async function main() {
       allergens: [],
       tags: ["vegan"],
       image:
-        "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "room-service-menu", "lobby-bar-menu"]
     },
     {
       category: "mocktails",
@@ -346,7 +386,8 @@ async function main() {
       allergens: [],
       tags: ["non-alcoholic", "vegan"],
       image:
-        "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=1200&q=80"
+        "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=1200&q=80",
+      menus: ["restaurant-menu", "lobby-bar-menu"]
     }
   ];
 
@@ -376,6 +417,7 @@ async function main() {
     });
     await upsertProductTranslations(created.id, product.names, product.descriptions);
     await connectProductRelations(created.id, product.allergens, product.tags);
+    await connectProductMenus(created.id, product.menus, menuMap);
   }
 
   await prisma.qrCode.upsert({
@@ -414,6 +456,16 @@ async function upsertCategoryTranslations(categoryId: string, names: readonly st
       where: { categoryId_locale: { categoryId, locale } },
       update: { name: names[index], slug: slugify(names[index]) },
       create: { categoryId, locale, name: names[index], slug: slugify(names[index]) }
+    });
+  }
+}
+
+async function upsertMenuTranslations(menuId: string, names: readonly string[]) {
+  for (const [index, locale] of locales.entries()) {
+    await prisma.menuTranslation.upsert({
+      where: { menuId_locale: { menuId, locale } },
+      update: { name: names[index], slug: slugify(names[index]) },
+      create: { menuId, locale, name: names[index], slug: slugify(names[index]) }
     });
   }
 }
@@ -460,6 +512,18 @@ async function connectProductRelations(productId: string, allergens: string[], t
       where: { productId_dietaryId: { productId, dietaryId: dietary.id } },
       update: {},
       create: { productId, dietaryId: dietary.id }
+    });
+  }
+}
+
+async function connectProductMenus(productId: string, menuSlugs: string[], menuMap: Map<string, string>) {
+  for (const slug of menuSlugs) {
+    const menuId = menuMap.get(slug);
+    if (!menuId) continue;
+    await prisma.productMenu.upsert({
+      where: { productId_menuId: { productId, menuId } },
+      update: {},
+      create: { productId, menuId }
     });
   }
 }

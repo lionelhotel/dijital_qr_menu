@@ -7,6 +7,7 @@ import { LanguageSwitcher } from "./language-switcher";
 
 type MenuHomeProps = {
   locale: Locale;
+  basePath?: string;
   business: {
     businessName: string;
     venueName: string;
@@ -23,7 +24,7 @@ type MenuHomeProps = {
   }[];
 };
 
-export function MenuHome({ locale, business, categories }: MenuHomeProps) {
+export function MenuHome({ locale, basePath, business, categories }: MenuHomeProps) {
   return (
     <main className="min-h-screen pb-12">
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
@@ -66,7 +67,7 @@ export function MenuHome({ locale, business, categories }: MenuHomeProps) {
           {categories.map((category) => (
             <Link
               key={category.id}
-              href={`/${locale}/menu/${category.slug}`}
+              href={basePath ? `${basePath}/${category.slug}` : `/${locale}/menu/${category.slug}`}
               className="group relative block min-h-[150px] overflow-hidden rounded-lg border border-border bg-primary text-primary-foreground shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg sm:min-h-[190px]"
             >
               <Image
