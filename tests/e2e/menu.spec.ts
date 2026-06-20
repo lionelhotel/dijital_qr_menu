@@ -9,6 +9,7 @@ test("opens QR menu and switches language", async ({ page }) => {
 
 test("searches products and opens detail", async ({ page }) => {
   await page.goto("/en/menu");
+  await page.getByRole("link", { name: /Main Courses/i }).click();
   await page.getByPlaceholder("Search menu").fill("salmon");
   await page.getByRole("button", { name: /Grilled Salmon/i }).click();
   await expect(page.getByRole("dialog")).toBeVisible();

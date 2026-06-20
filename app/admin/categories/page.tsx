@@ -27,6 +27,7 @@ export default async function CategoriesPage() {
             <Input name="description_tr" placeholder="Türkçe açıklama" />
             <Input name="description_en" placeholder="İngilizce açıklama" />
             <Input name="description_es" placeholder="İspanyolca açıklama" />
+            <Input name="imageUrl" placeholder="Ana menü temsili görsel URL" />
             <select name="parentId" className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm">
               <option value="">Üst kategori yok</option>
               {categories.map((category) => (
@@ -49,6 +50,7 @@ export default async function CategoriesPage() {
             <thead className="bg-muted text-left">
               <tr>
                 <th className="p-3">Ad</th>
+                <th className="p-3">Görsel</th>
                 <th className="p-3">Üst kategori</th>
                 <th className="p-3">Durum</th>
                 <th className="p-3">Sıra</th>
@@ -58,6 +60,7 @@ export default async function CategoriesPage() {
               {categories.map((category) => (
                 <tr key={category.id} className="border-t border-border">
                   <td className="p-3">{category.translations.find((item) => item.locale === "tr")?.name}</td>
+                  <td className="p-3 text-muted-foreground">{category.imageUrl ? "Var" : "Yok"}</td>
                   <td className="p-3 text-muted-foreground">
                     {category.parent?.translations.find((item) => item.locale === "tr")?.name ?? "-"}
                   </td>

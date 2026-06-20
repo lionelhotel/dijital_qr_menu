@@ -57,6 +57,26 @@ export async function getMenuData(locale: Locale) {
   };
 }
 
+export async function getCategoryMenuData(locale: Locale, slug: string) {
+  const data = await getMenuData(locale);
+  const category =
+    data.categories.find((item) => item.slug === slug) ??
+    data.categories.find((item) => item.translations.some((translation) => translation.locale === locale && translation.slug === slug)) ??
+    data.categories.find((item) => item.translations.some((translation) => translation.slug === slug));
+
+  if (!category) return null;
+
+  const categoryIds = collectCategoryIds(data.categories, category.id);
+  const categories = data.categories.filter((item) => categoryIds.includes(item.id));
+
+  return {
+    business: data.business,
+    theme: data.theme,
+    category,
+    categories
+  };
+}
+
 export async function trackMenuView(locale: Locale, location?: string | null, userAgent?: string | null) {
   await prisma.menuView.create({
     data: { locale, location: location ?? undefined, userAgent: userAgent ?? undefined }
@@ -127,4 +147,21 @@ function pick<T extends { locale: string }>(
     translations.find((item) => item.locale === "tr") ??
     translations[0];
   return selected?.[key] as string | null | undefined;
+}
+
+function collectCategoryIds(categories: { id: string; parentId: string | null }[], rootId: string) {
+  const ids = [rootId];
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    for (const category of categories) {
+      if (category.parentId && ids.includes(category.parentId) && !ids.includes(category.id)) {
+        ids.push(category.id);
+        changed = true;
+      }
+    }
+  }
+
+  return ids;
 }

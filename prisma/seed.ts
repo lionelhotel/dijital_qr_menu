@@ -112,24 +112,64 @@ async function main() {
   }
 
   const categories = [
-    ["breakfast", ["Kahvaltı", "Breakfast", "Desayuno"]],
-    ["starters", ["Başlangıçlar", "Starters", "Entrantes"]],
-    ["soups", ["Çorbalar", "Soups", "Sopas"]],
-    ["salads", ["Salatalar", "Salads", "Ensaladas"]],
-    ["main-courses", ["Ana Yemekler", "Main Courses", "Platos Principales"]],
-    ["pasta", ["Makarnalar", "Pasta", "Pastas"]],
-    ["desserts", ["Tatlılar", "Desserts", "Postres"]],
-    ["hot-beverages", ["Sıcak İçecekler", "Hot Beverages", "Bebidas Calientes"]],
-    ["cold-beverages", ["Soğuk İçecekler", "Cold Beverages", "Bebidas Frías"]],
-    ["mocktails", ["Alkolsüz Kokteyller", "Mocktails", "Cócteles Sin Alcohol"]]
+    [
+      "breakfast",
+      ["Kahvaltı", "Breakfast", "Desayuno"],
+      "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "starters",
+      ["Başlangıçlar", "Starters", "Entrantes"],
+      "https://images.unsplash.com/photo-1541014741259-de529411b96a?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "soups",
+      ["Çorbalar", "Soups", "Sopas"],
+      "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "salads",
+      ["Salatalar", "Salads", "Ensaladas"],
+      "https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "main-courses",
+      ["Ana Yemekler", "Main Courses", "Platos Principales"],
+      "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "pasta",
+      ["Makarnalar", "Pasta", "Pastas"],
+      "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "desserts",
+      ["Tatlılar", "Desserts", "Postres"],
+      "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "hot-beverages",
+      ["Sıcak İçecekler", "Hot Beverages", "Bebidas Calientes"],
+      "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "cold-beverages",
+      ["Soğuk İçecekler", "Cold Beverages", "Bebidas Frías"],
+      "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=1400&q=80"
+    ],
+    [
+      "mocktails",
+      ["Alkolsüz Kokteyller", "Mocktails", "Cócteles Sin Alcohol"],
+      "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=1400&q=80"
+    ]
   ] as const;
 
   const categoryMap = new Map<string, string>();
-  for (const [index, [slug, names]] of categories.entries()) {
+  for (const [index, [slug, names, imageUrl]] of categories.entries()) {
     const category = await prisma.category.upsert({
       where: { slug },
-      update: { sortOrder: index },
-      create: { slug, sortOrder: index }
+      update: { sortOrder: index, imageUrl },
+      create: { slug, sortOrder: index, imageUrl }
     });
     categoryMap.set(slug, category.id);
     await upsertCategoryTranslations(category.id, names);

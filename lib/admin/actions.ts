@@ -25,6 +25,7 @@ export async function createCategoryAction(formData: FormData) {
     },
     parentId: String(formData.get("parentId") || "") || null,
     slug: String(formData.get("slug") || slugify(name.en || name.tr)),
+    imageUrl: String(formData.get("imageUrl") || ""),
     sortOrder: Number(formData.get("sortOrder") ?? 0),
     isActive: formData.get("isActive") === "on"
   });
@@ -33,6 +34,7 @@ export async function createCategoryAction(formData: FormData) {
     data: {
       parentId: parsed.parentId || undefined,
       slug: parsed.slug,
+      imageUrl: parsed.imageUrl || undefined,
       sortOrder: parsed.sortOrder,
       isActive: parsed.isActive,
       createdBy: user.id,

@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Search, X, Flame, Leaf, WheatOff, Star, BadgeCheck } from "lucide-react";
+import Link from "next/link";
+import { Search, X, Flame, Leaf, WheatOff, Star, BadgeCheck, ChevronLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { t } from "@/lib/i18n/dictionaries";
@@ -46,6 +47,9 @@ type MenuExperienceProps = {
     coverImageUrl?: string | null;
   };
   categories: Category[];
+  menuTitle?: string | null;
+  menuDescription?: string | null;
+  menuImageUrl?: string | null;
 };
 
 const quickFilters = [
@@ -55,7 +59,7 @@ const quickFilters = [
   { key: "available", label: "Mevcut", icon: BadgeCheck }
 ];
 
-export function MenuExperience({ locale, business, categories }: MenuExperienceProps) {
+export function MenuExperience({ locale, business, categories, menuTitle, menuDescription, menuImageUrl }: MenuExperienceProps) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [filters, setFilters] = useState<string[]>([]);
@@ -102,10 +106,11 @@ export function MenuExperience({ locale, business, categories }: MenuExperienceP
         <div className="relative min-h-[190px] overflow-hidden rounded-lg bg-primary text-primary-foreground sm:min-h-[280px]">
           <Image
             src={
+              menuImageUrl ??
               business.coverImageUrl ??
               "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80"
             }
-            alt={business.venueName}
+            alt={menuTitle ?? business.venueName}
             fill
             priority
             className="object-cover opacity-65"
@@ -113,10 +118,18 @@ export function MenuExperience({ locale, business, categories }: MenuExperienceP
           />
           <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/45 to-transparent" />
           <div className="absolute bottom-0 max-w-2xl p-4 sm:p-8">
-            <h1 className="font-serif text-3xl leading-tight sm:text-5xl">{business.businessName}</h1>
+            <Link
+              href={`/${locale}/menu`}
+              className="mb-3 inline-flex items-center gap-2 rounded-md bg-card/95 px-3 py-2 text-sm font-medium text-primary"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Menü
+            </Link>
+            <h1 className="font-serif text-3xl leading-tight sm:text-5xl">{menuTitle ?? business.businessName}</h1>
             <p className="mt-1 text-base text-primary-foreground/90 sm:mt-2 sm:text-lg">{business.venueName}</p>
-            <p className="mt-3 max-w-xl text-sm text-primary-foreground/90 sm:mt-5 sm:text-base">{t(locale, "welcome")}</p>
-            <p className="hidden text-sm text-primary-foreground/75 sm:block">{t(locale, "welcomeSub")}</p>
+            <p className="mt-3 max-w-xl text-sm text-primary-foreground/90 sm:mt-5 sm:text-base">
+              {menuDescription || t(locale, "welcomeSub")}
+            </p>
           </div>
         </div>
       </section>
