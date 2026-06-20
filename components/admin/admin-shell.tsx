@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogOut, LayoutDashboard, Utensils, Tags, ImageIcon, QrCode, Users, Settings, ScrollText } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
+import { getAdminPath } from "@/lib/auth/session";
 import { Button } from "@/components/ui/button";
 
 const nav = [
@@ -17,6 +18,8 @@ const nav = [
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
+  const adminPath = getAdminPath();
+
   return (
     <div className="min-h-screen bg-muted">
       <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-border bg-card p-4 lg:block">
@@ -28,7 +31,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           {nav.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
-              href={href}
+              href={`${adminPath}${href.replace(/^\/admin/, "")}`}
               className="flex h-10 items-center gap-3 rounded-md px-3 text-sm transition hover:bg-muted"
             >
               <Icon className="h-4 w-4" />

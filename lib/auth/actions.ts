@@ -7,7 +7,7 @@ import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit/audit";
 import { prisma } from "@/lib/database/prisma";
 import { loginSchema } from "@/lib/validation/menu";
-import { clearSession, setSession } from "./session";
+import { clearSession, getAdminPath, setSession } from "./session";
 import { hitRateLimit } from "./rate-limit";
 
 export type LoginState = { error?: string };
@@ -57,10 +57,10 @@ export async function loginAction(_state: LoginState, formData: FormData): Promi
     userAgent: requestHeaders.get("user-agent")
   });
 
-  redirect("/admin/dashboard");
+  redirect(`${getAdminPath()}/dashboard`);
 }
 
 export async function logoutAction() {
   await clearSession();
-  redirect("/admin/login");
+  redirect(`${getAdminPath()}/login`);
 }

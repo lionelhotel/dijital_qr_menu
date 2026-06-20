@@ -21,6 +21,7 @@ services:
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       ADMIN_PATH: ${ADMIN_PATH:-/admin}
       SESSION_SECRET: ${SESSION_SECRET:-change-this-to-a-long-random-secret}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@example.com}
       SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-change-me-before-production}

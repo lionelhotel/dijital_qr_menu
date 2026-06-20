@@ -7,12 +7,29 @@ import { prisma } from "@/lib/database/prisma";
 
 export const sessionCookieName = "qr_admin_session";
 
+export function getAdminPath() {
+  const configured = process.env.ADMIN_PATH?.trim() || "/admin";
+  return configured.startsWith("/") ? configured : `/${configured}`;
+}
+
 export function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
 export function createSessionToken() {
   return randomBytes(32).toString("base64url");
+}
+
+function shouldUseSecureCookie(requestHeaders: Awaited<ReturnType<typeof headers>>) {
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (process.env.COOKIE_SECURE === "false") return false;
+
+  const protocol = requestHeaders.get("x-forwarded-proto");
+  const origin = requestHeaders.get("origin");
+  const referer = requestHeaders.get("referer");
+
+  if (protocol) return protocol === "https";
+  return origin?.startsWith("https://") || referer?.startsWith("https://") || false;
 }
 
 export async function setSession(userId: string) {
@@ -33,7 +50,7 @@ export async function setSession(userId: string) {
   const cookieStore = await cookies();
   cookieStore.set(sessionCookieName, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(requestHeaders),
     sameSite: "lax",
     path: "/",
     expires: expiresAt
@@ -42,11 +59,18 @@ export async function setSession(userId: string) {
 
 export async function clearSession() {
   const cookieStore = await cookies();
+  const requestHeaders = await headers();
   const token = cookieStore.get(sessionCookieName)?.value;
   if (token) {
     await prisma.session.deleteMany({ where: { tokenHash: hashToken(token) } });
   }
-  cookieStore.delete(sessionCookieName);
+  cookieStore.set(sessionCookieName, "", {
+    httpOnly: true,
+    secure: shouldUseSecureCookie(requestHeaders),
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0
+  });
 }
 
 export async function getCurrentUser() {
@@ -71,6 +95,6 @@ export async function getCurrentUser() {
 
 export async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect(`${getAdminPath()}/login`);
   return user;
 }
