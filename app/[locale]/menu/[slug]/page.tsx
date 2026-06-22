@@ -27,6 +27,8 @@ export default async function SelectedMenuPage({
     <MenuHome
       locale={locale}
       basePath={`/${locale}/menu/${slug}`}
+      backHref={`/${locale}/menu`}
+      backLabel="Başa dön"
       business={{
         businessName: data.menu.label ?? "Menu",
         venueName: data.business?.venueName ?? "Restaurant & Bar",

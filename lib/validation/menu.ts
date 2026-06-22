@@ -44,6 +44,7 @@ export const productSchema = z.object({
   }),
   imageUrl: z.string().url().or(z.literal("")).default(""),
   price: z.coerce.number().positive(),
+  calories: z.coerce.number().int().min(0).optional().nullable(),
   currency: z.string().default("TRY"),
   spicyLevel: z.coerce.number().int().min(0).max(5).default(0),
   isActive: z.coerce.boolean().default(true),

@@ -214,6 +214,7 @@ async function main() {
         "Una sopa turca clásica preparada con lentejas rojas, zanahorias, cebolla y especias tradicionales."
       ],
       price: 190,
+      calories: 220,
       allergens: ["gluten"],
       tags: ["vegetarian"],
       image:
@@ -229,6 +230,7 @@ async function main() {
         "Pollo a la parrilla, lechuga romana, queso parmesano, picatostes y salsa César."
       ],
       price: 420,
+      calories: 520,
       allergens: ["gluten", "milk", "egg"],
       tags: [],
       image:
@@ -244,6 +246,7 @@ async function main() {
         "Salmón a la parrilla servido con verduras de temporada, puré de patatas y salsa de mantequilla al limón."
       ],
       price: 790,
+      calories: 640,
       allergens: ["fish", "milk"],
       tags: ["chef"],
       image:
@@ -260,6 +263,7 @@ async function main() {
         "Solomillo de ternera servido con verduras a la parrilla, patatas gratinadas y salsa de pimienta."
       ],
       price: 1150,
+      calories: 780,
       allergens: ["milk"],
       tags: ["chef"],
       image:
@@ -276,6 +280,7 @@ async function main() {
         "Pasta penne preparada con salsa de tomate, ajo, albahaca y chile."
       ],
       price: 390,
+      calories: 560,
       allergens: ["gluten"],
       tags: ["vegan", "spicy"],
       image:
@@ -292,6 +297,7 @@ async function main() {
         "Hamburguesa de ternera, queso cheddar, lechuga, tomate, cebolla caramelizada y salsa especial. Servida con patatas fritas."
       ],
       price: 520,
+      calories: 850,
       allergens: ["gluten", "milk", "egg"],
       tags: [],
       image:
@@ -307,6 +313,7 @@ async function main() {
         "Una tarta de queso rica y cremosa con una superficie ligeramente caramelizada."
       ],
       price: 290,
+      calories: 430,
       allergens: ["milk", "egg"],
       tags: ["new"],
       image:
@@ -323,6 +330,7 @@ async function main() {
         "Selección de quesos, aceitunas, tomates, pepino, miel, mantequilla, mermelada, huevo cocido y cesta de pan."
       ],
       price: 590,
+      calories: 760,
       allergens: ["gluten", "milk", "egg"],
       tags: ["local"],
       image:
@@ -338,6 +346,7 @@ async function main() {
         "Café turco preparado con el método tradicional."
       ],
       price: 140,
+      calories: 20,
       allergens: [],
       tags: ["local"],
       image:
@@ -353,6 +362,7 @@ async function main() {
         "Espresso, leche caliente y abundante espuma de leche."
       ],
       price: 180,
+      calories: 140,
       allergens: ["milk"],
       tags: [],
       image:
@@ -368,6 +378,7 @@ async function main() {
         "Zumo de naranja recién exprimido."
       ],
       price: 220,
+      calories: 110,
       allergens: [],
       tags: ["vegan"],
       image:
@@ -383,6 +394,7 @@ async function main() {
         "Lima fresca, menta, azúcar moreno, agua con gas y hielo picado."
       ],
       price: 260,
+      calories: 130,
       allergens: [],
       tags: ["non-alcoholic", "vegan"],
       image:
@@ -398,6 +410,7 @@ async function main() {
       },
       update: {
         price: product.price,
+        calories: product.calories,
         mainImageUrl: product.image,
         isFeatured: product.featured ?? false,
         isNew: product.isNew ?? false,
@@ -407,6 +420,7 @@ async function main() {
         id: `seed-${slugify(product.names[1])}`,
         categoryId: categoryMap.get(product.category)!,
         price: product.price,
+        calories: product.calories,
         currency: "TRY",
         mainImageUrl: product.image,
         isFeatured: product.featured ?? false,

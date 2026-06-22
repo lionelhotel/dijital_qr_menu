@@ -5,6 +5,7 @@ import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit/audit";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
+import { estimateCaloriesPerPortion } from "@/lib/openai/nutrition";
 import { storeImage } from "@/lib/uploads/images";
 import { slugify } from "@/lib/utils";
 import { categorySchema, menuSchema, productSchema } from "@/lib/validation/menu";
@@ -155,6 +156,7 @@ export async function createProductAction(formData: FormData) {
     data: {
       categoryId: parsed.categoryId,
       price: parsed.price,
+      calories: parsed.calories ?? undefined,
       currency: parsed.currency,
       spicyLevel: parsed.spicyLevel,
       mainImageUrl: imageUrl,
@@ -170,6 +172,7 @@ export async function createProductAction(formData: FormData) {
   });
 
   await logAndRevalidate(user.id, AuditAction.CREATE, "Product", product.id, parsed);
+  if (!parsed.calories) await maybeCalculateAndStoreNutrition(product.id);
 }
 
 export async function updateProductAction(formData: FormData) {
@@ -188,6 +191,7 @@ export async function updateProductAction(formData: FormData) {
       data: {
         categoryId: parsed.categoryId,
         price: parsed.price,
+        calories: parsed.calories ?? null,
         currency: parsed.currency,
         spicyLevel: parsed.spicyLevel,
         mainImageUrl: imageUrl,
@@ -204,6 +208,14 @@ export async function updateProductAction(formData: FormData) {
   ]);
 
   await logAndRevalidate(user.id, AuditAction.UPDATE, "Product", id, parsed);
+  if (!parsed.calories) await maybeCalculateAndStoreNutrition(id);
+}
+
+export async function calculateProductNutritionAction(formData: FormData) {
+  const user = await requireAdmin();
+  const id = requiredId(formData);
+  await maybeCalculateAndStoreNutrition(id);
+  await logAndRevalidate(user.id, AuditAction.UPDATE, "ProductNutrition", id);
 }
 
 export async function deleteProductAction(formData: FormData) {
@@ -398,6 +410,7 @@ function readProductForm(formData: FormData) {
     ingredients: readLocalized(formData, "ingredients"),
     imageUrl: String(formData.get("imageUrl") || ""),
     price: formData.get("price"),
+    calories: String(formData.get("calories") || "") || null,
     currency: String(formData.get("currency") || "TRY"),
     spicyLevel: formData.get("spicyLevel") ?? 0,
     isActive: formData.get("isActive") === "on",
@@ -561,4 +574,29 @@ async function logAndRevalidate(
 ) {
   await audit({ userId, action, resourceType, resourceId, newValue });
   revalidatePath("/");
+}
+
+async function maybeCalculateAndStoreNutrition(productId: string) {
+  if (!process.env.OPENAI_API_KEY) return;
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: { translations: true }
+  });
+  if (!product) return;
+
+  const tr = product.translations.find((item) => item.locale === "tr");
+  const en = product.translations.find((item) => item.locale === "en");
+  const estimate = await estimateCaloriesPerPortion({
+    name: tr?.name || en?.name || productId,
+    description: tr?.shortDescription || en?.shortDescription,
+    ingredients: tr?.ingredients || en?.ingredients,
+    portion: product.portion
+  });
+
+  if (!estimate) return;
+  await prisma.product.update({
+    where: { id: productId },
+    data: { calories: estimate.calories }
+  });
 }

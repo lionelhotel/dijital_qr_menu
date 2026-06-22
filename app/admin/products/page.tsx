@@ -1,5 +1,10 @@
 import Image from "next/image";
-import { createProductAction, deleteProductAction, updateProductAction } from "@/lib/admin/actions";
+import {
+  calculateProductNutritionAction,
+  createProductAction,
+  deleteProductAction,
+  updateProductAction
+} from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { formatPrice } from "@/lib/utils";
@@ -65,6 +70,10 @@ export default async function ProductsPage() {
                       <input type="hidden" name="id" value={product.id} />
                       <Button type="submit" variant="outline">Sil</Button>
                     </form>
+                    <form action={calculateProductNutritionAction}>
+                      <input type="hidden" name="id" value={product.id} />
+                      <Button type="submit" variant="outline">AI ile kalori hesapla</Button>
+                    </form>
                   </div>
                   <ProductForm
                     action={updateProductAction}
@@ -97,6 +106,7 @@ function ProductForm({
     id: string;
     categoryId: string;
     price: unknown;
+    calories: number | null;
     currency: string;
     spicyLevel: number;
     mainImageUrl: string | null;
@@ -139,6 +149,7 @@ function ProductForm({
       <Input name="ingredients_en" placeholder="İngilizce içerik" defaultValue={en?.ingredients ?? ""} />
       <Input name="ingredients_es" placeholder="İspanyolca içerik" defaultValue={es?.ingredients ?? ""} />
       <Input name="price" type="number" step="0.01" placeholder="Fiyat" defaultValue={product?.price?.toString()} required />
+      <Input name="calories" type="number" min={0} placeholder="1 porsiyon kalori (kcal)" defaultValue={product?.calories ?? ""} />
       <Input name="currency" placeholder="Para birimi" defaultValue={product?.currency ?? "TRY"} />
       <Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} />
       <Input name="imageUrl" placeholder="Mevcut görsel URL" defaultValue={product?.mainImageUrl ?? ""} />

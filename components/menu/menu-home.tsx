@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { t } from "@/lib/i18n/dictionaries";
 import { LanguageSwitcher } from "./language-switcher";
@@ -8,6 +8,8 @@ import { LanguageSwitcher } from "./language-switcher";
 type MenuHomeProps = {
   locale: Locale;
   basePath?: string;
+  backHref?: string;
+  backLabel?: string;
   business: {
     businessName: string;
     venueName: string;
@@ -24,7 +26,7 @@ type MenuHomeProps = {
   }[];
 };
 
-export function MenuHome({ locale, basePath, business, categories }: MenuHomeProps) {
+export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön", business, categories }: MenuHomeProps) {
   return (
     <main className="min-h-screen pb-12">
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
@@ -55,6 +57,15 @@ export function MenuHome({ locale, basePath, business, categories }: MenuHomePro
           />
           <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/45 to-transparent" />
           <div className="absolute bottom-0 max-w-2xl p-4 sm:p-8">
+            {backHref ? (
+              <Link
+                href={backHref}
+                className="mb-3 inline-flex items-center gap-2 rounded-md bg-card/95 px-3 py-2 text-sm font-medium text-primary"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {backLabel}
+              </Link>
+            ) : null}
             <h1 className="font-serif text-3xl leading-tight sm:text-5xl">{business.businessName}</h1>
             <p className="mt-1 text-base text-primary-foreground/90 sm:text-lg">{business.venueName}</p>
             <p className="mt-3 max-w-xl text-sm text-primary-foreground/90 sm:text-base">{t(locale, "welcome")}</p>
