@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit/audit";
+import { errorMessage } from "@/lib/admin/error-message";
+import { setAdminFlash } from "@/lib/admin/flash";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { estimateCaloriesPerPortion } from "@/lib/openai/nutrition";
@@ -213,9 +215,20 @@ export async function updateProductAction(formData: FormData) {
 
 export async function calculateProductNutritionAction(formData: FormData) {
   const user = await requireAdmin();
-  const id = requiredId(formData);
-  await maybeCalculateAndStoreNutrition(id);
-  await logAndRevalidate(user.id, AuditAction.UPDATE, "ProductNutrition", id);
+  try {
+    const id = requiredId(formData);
+    const result = await maybeCalculateAndStoreNutrition(id);
+    await audit({ userId: user.id, action: AuditAction.UPDATE, resourceType: "ProductNutrition", resourceId: id, newValue: result });
+    if (result.ok) {
+      await setAdminFlash("success", `Kalori başarıyla hesaplandı: ${result.calories} kcal.`);
+    } else {
+      await setAdminFlash("error", `Kalori hesaplanamadı: ${result.reason}`);
+    }
+  } catch (error) {
+    console.error("Nutrition calculation failed", error);
+    await setAdminFlash("error", `Kalori hesaplanamadı: ${errorMessage(error)}`);
+  }
+  revalidatePath("/");
 }
 
 export async function deleteProductAction(formData: FormData) {
@@ -573,30 +586,51 @@ async function logAndRevalidate(
   newValue?: unknown
 ) {
   await audit({ userId, action, resourceType, resourceId, newValue });
+  await setAdminFlash("success", successMessage(action, resourceType));
   revalidatePath("/");
 }
 
+function successMessage(action: AuditAction, resourceType: string) {
+  if (resourceType.endsWith(":sort")) return "Sıralama başarıyla kaydedildi.";
+  if (action === AuditAction.DELETE) return "Kayıt başarıyla silindi.";
+  if (action === AuditAction.SETTINGS_CHANGE) return "Ayarlar başarıyla kaydedildi.";
+  if (action === AuditAction.UPDATE) return "Kayıt başarıyla güncellendi.";
+  if (action === AuditAction.CREATE) return "Kayıt başarıyla kaydedildi.";
+  return "İşlem başarıyla tamamlandı.";
+}
+
 async function maybeCalculateAndStoreNutrition(productId: string) {
-  if (!process.env.OPENAI_API_KEY) return;
+  if (!process.env.OPENAI_API_KEY) {
+    return { ok: false, reason: "OPENAI_API_KEY is not configured" };
+  }
 
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-    include: { translations: true }
-  });
-  if (!product) return;
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { translations: true }
+    });
+    if (!product) return { ok: false, reason: "Product not found" };
 
-  const tr = product.translations.find((item) => item.locale === "tr");
-  const en = product.translations.find((item) => item.locale === "en");
-  const estimate = await estimateCaloriesPerPortion({
-    name: tr?.name || en?.name || productId,
-    description: tr?.shortDescription || en?.shortDescription,
-    ingredients: tr?.ingredients || en?.ingredients,
-    portion: product.portion
-  });
+    const tr = product.translations.find((item) => item.locale === "tr");
+    const en = product.translations.find((item) => item.locale === "en");
+    const estimate = await estimateCaloriesPerPortion({
+      name: tr?.name || en?.name || productId,
+      description: tr?.shortDescription || en?.shortDescription,
+      ingredients: tr?.ingredients || en?.ingredients,
+      portion: product.portion
+    });
 
-  if (!estimate) return;
-  await prisma.product.update({
-    where: { id: productId },
-    data: { calories: estimate.calories }
-  });
+    if (!estimate) return { ok: false, reason: "Nutrition estimate unavailable" };
+    await prisma.product.update({
+      where: { id: productId },
+      data: { calories: estimate.calories }
+    });
+    return { ok: true, calories: estimate.calories, note: estimate.note };
+  } catch (error) {
+    console.error("Nutrition calculation action failed", error);
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "Unknown nutrition calculation error"
+    };
+  }
 }

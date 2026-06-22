@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
 import { getAdminPath } from "@/lib/auth/session";
+import { AdminFlash } from "@/components/admin/admin-flash";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +10,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-muted">
+      <AdminFlash />
       <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-border bg-card p-4 lg:block">
         <div className="mb-6">
           <p className="text-sm text-muted-foreground">Lionel Hotel Istanbul</p>
