@@ -72,35 +72,35 @@ export default async function ProductsPage({
     <AdminShell>
       <h1 className="font-serif text-3xl">Ürünler</h1>
       <div className="mt-6 space-y-6">
-        <Card className="p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-semibold">Ürün oluştur</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Temel bilgiler yatay alanda, menü ve alerjen seçimleri formun sonunda yer alır.</p>
-            </div>
-          </div>
-          <ProductForm
-            action={createProductAction}
-            categories={categories}
-            menus={menus}
-            allergens={allergens}
-            media={media}
-            mediaCategories={mediaCategories}
-            variant="create"
-          />
-        </Card>
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_420px]">
+          <Card className="p-4">
+            <h2 className="text-xl font-semibold">Ürün oluştur</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Temel bilgiler yatay alanda, menü ve alerjen seçimleri formun sonunda yer alır.</p>
+            <ProductForm
+              action={createProductAction}
+              categories={categories}
+              menus={menus}
+              allergens={allergens}
+              media={media}
+              mediaCategories={mediaCategories}
+              variant="create"
+            />
+          </Card>
 
-        <Card className="p-4">
-          <h2 className="mb-3 font-semibold">Sürükle bırak sıralama</h2>
-          <SortableList
-            type="product"
-            layout="horizontal"
-            items={productsForSorting.map((product) => ({
-              id: product.id,
-              label: product.translations.find((item) => item.locale === "tr")?.name ?? product.id
-            }))}
-          />
-        </Card>
+          <Card className="self-start p-4">
+            <h2 className="font-semibold">Ürün sıralama</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Sürükle bırak ile ürün sırasını belirleyin.</p>
+            <div className="mt-4">
+              <SortableList
+                type="product"
+                items={productsForSorting.map((product) => ({
+                  id: product.id,
+                  label: product.translations.find((item) => item.locale === "tr")?.name ?? product.id
+                }))}
+              />
+            </div>
+          </Card>
+        </div>
 
         <Card className="p-4">
           <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_260px_auto]">
@@ -217,40 +217,57 @@ function ProductForm({
   const selectedMenus = new Set(product?.menus.map((item) => item.menuId));
   const selectedAllergens = new Set(product?.allergens.map((item) => item.allergenId));
   const isCreate = variant === "create";
-  const formClassName = isCreate ? "mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4" : "mt-4 space-y-3";
-  const wideFieldClassName = isCreate ? "md:col-span-2" : undefined;
-  const fullFieldClassName = isCreate ? "md:col-span-2 xl:col-span-4" : undefined;
+  const sectionSpacing = isCreate ? "mt-4 space-y-1" : "mt-4 space-y-3";
 
   return (
-    <form action={action} className={formClassName}>
+    <form action={action} className={sectionSpacing}>
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
-      <LabeledField label="Kategori">
-        <select name="categoryId" defaultValue={product?.categoryId ?? ""} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm" required>
-          <option value="">Kategori seç</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.translations.find((item) => item.locale === "tr")?.name}
-            </option>
-          ))}
-        </select>
-      </LabeledField>
-      <LabeledField label="Türkçe ürün adı"><Input name="name_tr" defaultValue={tr?.name} required /></LabeledField>
-      <TranslatedInputField label="İngilizce ürün adı" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
-      <TranslatedInputField label="İspanyolca ürün adı" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
-      <LabeledField label="Türkçe kısa açıklama" className={wideFieldClassName}><Input name="short_tr" defaultValue={tr?.shortDescription ?? ""} required /></LabeledField>
-      <TranslatedInputField label="İngilizce kısa açıklama" name="short_en" sourceName="short_tr" targetLocale="en" defaultValue={en?.shortDescription ?? ""} required fieldClassName={wideFieldClassName} />
-      <TranslatedInputField label="İspanyolca kısa açıklama" name="short_es" sourceName="short_tr" targetLocale="es" defaultValue={es?.shortDescription ?? ""} required fieldClassName={wideFieldClassName} />
-      <LabeledField label="Türkçe içerik" className={wideFieldClassName}><Input name="ingredients_tr" defaultValue={tr?.ingredients ?? ""} /></LabeledField>
-      <TranslatedInputField label="İngilizce içerik" name="ingredients_en" sourceName="ingredients_tr" targetLocale="en" defaultValue={en?.ingredients ?? ""} fieldClassName={wideFieldClassName} />
-      <TranslatedInputField label="İspanyolca içerik" name="ingredients_es" sourceName="ingredients_tr" targetLocale="es" defaultValue={es?.ingredients ?? ""} fieldClassName={wideFieldClassName} />
-      <LabeledField label="Fiyat"><ProductPriceField productId={product?.id} defaultPrice={product?.price?.toString()} /></LabeledField>
-      <LabeledField label="1 porsiyon kalori (kcal) ve enerji">
-        <NutritionEnergyField productId={product?.id} defaultCalories={product?.calories} />
-      </LabeledField>
-      <LabeledField label="Para birimi"><Input name="currency" defaultValue={product?.currency ?? "TRY"} /></LabeledField>
-      <LabeledField label="Hazırlanma süresi (dk)"><Input name="prepMinutes" type="number" min={0} defaultValue={product?.prepMinutes ?? ""} /></LabeledField>
-      <LabeledField label="Acılık seviyesi"><Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} /></LabeledField>
-      <LabeledField label="Ürün görseli" className={wideFieldClassName}>
+
+      <ProductFormSection number={1} title="Temel bilgiler">
+        <div className="mb-3 max-w-sm">
+          <LabeledField label="Kategori">
+            <select name="categoryId" defaultValue={product?.categoryId ?? ""} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm" required>
+              <option value="">Kategori seç</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.translations.find((item) => item.locale === "tr")?.name}
+                </option>
+              ))}
+            </select>
+          </LabeledField>
+        </div>
+        <div className="grid gap-3 xl:grid-cols-3">
+          <FieldGroup title="Ürün adı">
+            <LabeledField label="Türkçe ürün adı"><Input name="name_tr" defaultValue={tr?.name} required /></LabeledField>
+            <TranslatedInputField label="İngilizce ürün adı" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
+            <TranslatedInputField label="İspanyolca ürün adı" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
+          </FieldGroup>
+          <FieldGroup title="Kısa açıklama">
+            <LabeledField label="Türkçe kısa açıklama"><Input name="short_tr" defaultValue={tr?.shortDescription ?? ""} required /></LabeledField>
+            <TranslatedInputField label="İngilizce kısa açıklama" name="short_en" sourceName="short_tr" targetLocale="en" defaultValue={en?.shortDescription ?? ""} required />
+            <TranslatedInputField label="İspanyolca kısa açıklama" name="short_es" sourceName="short_tr" targetLocale="es" defaultValue={es?.shortDescription ?? ""} required />
+          </FieldGroup>
+          <FieldGroup title="İçerik">
+            <LabeledField label="Türkçe içerik"><Input name="ingredients_tr" defaultValue={tr?.ingredients ?? ""} /></LabeledField>
+            <TranslatedInputField label="İngilizce içerik" name="ingredients_en" sourceName="ingredients_tr" targetLocale="en" defaultValue={en?.ingredients ?? ""} />
+            <TranslatedInputField label="İspanyolca içerik" name="ingredients_es" sourceName="ingredients_tr" targetLocale="es" defaultValue={es?.ingredients ?? ""} />
+          </FieldGroup>
+        </div>
+      </ProductFormSection>
+
+      <ProductFormSection number={2} title="Fiyatlandırma ve ürün detayları">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_160px_1.8fr_1fr_1fr]">
+          <LabeledField label="Fiyat"><ProductPriceField productId={product?.id} defaultPrice={product?.price?.toString()} /></LabeledField>
+          <LabeledField label="Para birimi"><Input name="currency" defaultValue={product?.currency ?? "TRY"} /></LabeledField>
+          <LabeledField label="1 porsiyon kalori (kcal) ve enerji">
+            <NutritionEnergyField productId={product?.id} defaultCalories={product?.calories} />
+          </LabeledField>
+          <LabeledField label="Hazırlanma süresi (dk)"><Input name="prepMinutes" type="number" min={0} defaultValue={product?.prepMinutes ?? ""} /></LabeledField>
+          <LabeledField label="Acılık seviyesi"><Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} /></LabeledField>
+        </div>
+      </ProductFormSection>
+
+      <ProductFormSection number={3} title="Ürün görseli">
         <MediaPickerField
           name="imageUrl"
           defaultValue={product?.mainImageUrl ?? ""}
@@ -260,37 +277,76 @@ function ProductForm({
           targetWidth={1200}
           targetHeight={900}
         />
-      </LabeledField>
-      <fieldset className={`rounded-md border border-border p-3 ${fullFieldClassName ?? ""}`}>
-        <legend className="px-1 text-sm font-medium">Bu ürün hangi menülerde görünsün?</legend>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {menus.map((menu) => (
-            <label key={menu.id} className="flex items-center gap-2 text-sm">
-              <input name="menuIds" value={menu.id} type="checkbox" defaultChecked={selectedMenus.has(menu.id)} />
-              {menu.translations.find((item) => item.locale === "tr")?.name}
-            </label>
-          ))}
+      </ProductFormSection>
+
+      <ProductFormSection number={4} title="Menü görünürlüğü">
+        <fieldset>
+          <legend className="text-sm font-medium">Bu ürün hangi menülerde görünsün?</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {menus.map((menu) => (
+              <label key={menu.id} className="flex items-center gap-2 text-sm">
+                <input name="menuIds" value={menu.id} type="checkbox" defaultChecked={selectedMenus.has(menu.id)} />
+                {menu.translations.find((item) => item.locale === "tr")?.name}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </ProductFormSection>
+
+      <ProductFormSection number={5} title="Manuel alerjenler">
+        <fieldset>
+          <legend className="text-xs text-muted-foreground">İçerik metninden otomatik alerjen algılanır; burada ek manuel seçim de yapabilirsiniz.</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {allergens.map((allergen) => (
+              <label key={allergen.id} className="flex items-center gap-2 text-sm">
+                <input name="allergenIds" value={allergen.id} type="checkbox" defaultChecked={selectedAllergens.has(allergen.id)} />
+                {allergen.translations.find((item) => item.locale === "tr")?.name ?? allergen.key}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </ProductFormSection>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+        <div className="grid flex-1 grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+          <label className="flex items-center gap-2"><input name="isActive" type="checkbox" defaultChecked={product?.isActive ?? true} /> Aktif</label>
+          <label className="flex items-center gap-2"><input name="isAvailable" type="checkbox" defaultChecked={product?.isAvailable ?? true} /> Mevcut</label>
+          <label className="flex items-center gap-2"><input name="isFeatured" type="checkbox" defaultChecked={product?.isFeatured ?? false} /> Öne çıkan</label>
+          <label className="flex items-center gap-2"><input name="isNew" type="checkbox" defaultChecked={product?.isNew ?? false} /> Yeni</label>
         </div>
-      </fieldset>
-      <fieldset className={`rounded-md border border-border p-3 ${fullFieldClassName ?? ""}`}>
-        <legend className="px-1 text-sm font-medium">Manuel alerjenler</legend>
-        <p className="text-xs text-muted-foreground">İçerik metninden otomatik alerjen algılanır; burada ek manuel seçim de yapabilirsiniz.</p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {allergens.map((allergen) => (
-            <label key={allergen.id} className="flex items-center gap-2 text-sm">
-              <input name="allergenIds" value={allergen.id} type="checkbox" defaultChecked={selectedAllergens.has(allergen.id)} />
-              {allergen.translations.find((item) => item.locale === "tr")?.name ?? allergen.key}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <div className={`grid grid-cols-2 gap-2 text-sm md:grid-cols-4 ${fullFieldClassName ?? ""}`}>
-        <label className="flex items-center gap-2"><input name="isActive" type="checkbox" defaultChecked={product?.isActive ?? true} /> Aktif</label>
-        <label className="flex items-center gap-2"><input name="isAvailable" type="checkbox" defaultChecked={product?.isAvailable ?? true} /> Mevcut</label>
-        <label className="flex items-center gap-2"><input name="isFeatured" type="checkbox" defaultChecked={product?.isFeatured ?? false} /> Öne çıkan</label>
-        <label className="flex items-center gap-2"><input name="isNew" type="checkbox" defaultChecked={product?.isNew ?? false} /> Yeni</label>
+        <Button type="submit" className="min-w-28">Kaydet</Button>
       </div>
-      <Button type="submit" className={isCreate ? "w-fit" : undefined}>Kaydet</Button>
     </form>
+  );
+}
+
+function ProductFormSection({
+  number,
+  title,
+  children
+}: {
+  number: number;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-border p-3">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold">
+          {number}
+        </span>
+        <h3 className="font-semibold">{title}</h3>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3 rounded-lg border border-border p-3">
+      <h4 className="font-semibold">{title}</h4>
+      {children}
+    </div>
   );
 }
