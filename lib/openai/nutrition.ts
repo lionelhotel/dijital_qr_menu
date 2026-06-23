@@ -1,5 +1,7 @@
 import "server-only";
 
+import { openAIErrorMessage, type OpenAIResult } from "./errors";
+
 type NutritionInput = {
   name: string;
   description?: string | null;
@@ -7,8 +9,15 @@ type NutritionInput = {
   portion?: string | null;
 };
 
-export async function estimateCaloriesPerPortion(input: NutritionInput) {
-  if (!process.env.OPENAI_API_KEY) return null;
+type NutritionResult = {
+  calories: number;
+  note: string;
+};
+
+export async function estimateCaloriesPerPortion(input: NutritionInput): Promise<OpenAIResult<NutritionResult>> {
+  if (!process.env.OPENAI_API_KEY) {
+    return { error: "OPENAI_API_KEY tanımlı değil." };
+  }
 
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -54,9 +63,9 @@ export async function estimateCaloriesPerPortion(input: NutritionInput) {
     });
 
     if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      console.error("OpenAI nutrition request failed", response.status, body.slice(0, 500));
-      return null;
+      const message = await openAIErrorMessage(response, "OpenAI kalori isteği");
+      console.error("OpenAI nutrition request failed", message);
+      return { error: message, status: response.status };
     }
 
     const data = (await response.json()) as {
@@ -64,10 +73,12 @@ export async function estimateCaloriesPerPortion(input: NutritionInput) {
       output?: Array<{ content?: Array<{ text?: string }> }>;
     };
     const text = data.output_text ?? data.output?.flatMap((item) => item.content ?? []).find((item) => item.text)?.text;
-    if (!text) return null;
+    if (!text) return { error: "OpenAI kalori yanıtı boş döndü." };
 
     const parsed = JSON.parse(text) as { caloriesKcal: number; reasoning: string };
-    if (!Number.isFinite(parsed.caloriesKcal)) return null;
+    if (!Number.isFinite(parsed.caloriesKcal)) {
+      return { error: "OpenAI kalori yanıtında geçerli kalori değeri bulunamadı." };
+    }
 
     return {
       calories: Math.round(parsed.caloriesKcal),
@@ -75,6 +86,6 @@ export async function estimateCaloriesPerPortion(input: NutritionInput) {
     };
   } catch (error) {
     console.error("OpenAI nutrition estimate failed", error);
-    return null;
+    return { error: error instanceof Error ? error.message : "Kalori hesaplama sırasında beklenmeyen hata oluştu." };
   }
 }

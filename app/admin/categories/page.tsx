@@ -2,10 +2,10 @@ import Image from "next/image";
 import { createCategoryAction, deleteCategoryAction, updateCategoryAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
-import { TranslateButton } from "@/components/admin/translate-button";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SortableList } from "@/components/admin/sortable-list";
 import { LabeledField } from "@/components/forms/labeled-field";
+import { TranslatedInputField } from "@/components/forms/translated-input-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -83,13 +83,12 @@ function CategoryForm({
   return (
     <form action={action} className="mt-4 space-y-3">
       {category ? <input type="hidden" name="id" value={category.id} /> : null}
-      <TranslateButton />
       <LabeledField label="Türkçe kategori adı"><Input name="name_tr" defaultValue={tr?.name} required /></LabeledField>
-      <LabeledField label="İngilizce kategori adı"><Input name="name_en" defaultValue={en?.name} required /></LabeledField>
-      <LabeledField label="İspanyolca kategori adı"><Input name="name_es" defaultValue={es?.name} required /></LabeledField>
+      <TranslatedInputField label="İngilizce kategori adı" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
+      <TranslatedInputField label="İspanyolca kategori adı" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
       <LabeledField label="Türkçe açıklama"><Input name="description_tr" defaultValue={tr?.description ?? ""} /></LabeledField>
-      <LabeledField label="İngilizce açıklama"><Input name="description_en" defaultValue={en?.description ?? ""} /></LabeledField>
-      <LabeledField label="İspanyolca açıklama"><Input name="description_es" defaultValue={es?.description ?? ""} /></LabeledField>
+      <TranslatedInputField label="İngilizce açıklama" name="description_en" sourceName="description_tr" targetLocale="en" defaultValue={en?.description ?? ""} />
+      <TranslatedInputField label="İspanyolca açıklama" name="description_es" sourceName="description_tr" targetLocale="es" defaultValue={es?.description ?? ""} />
       <LabeledField label="Üst kategori">
         <select name="parentId" defaultValue={category?.parentId ?? ""} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm">
           <option value="">Üst kategori yok</option>

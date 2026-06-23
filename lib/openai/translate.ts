@@ -1,6 +1,12 @@
 import "server-only";
 
-export async function translateTurkishFields(values: Record<string, string>) {
+import { openAIErrorMessage, type OpenAIResult } from "./errors";
+
+type TranslationResult = {
+  translations: Record<string, { en: string; es: string }>;
+};
+
+export async function translateTurkishFields(values: Record<string, string>): Promise<OpenAIResult<TranslationResult>> {
   if (!process.env.OPENAI_API_KEY) {
     return { error: "OPENAI_API_KEY tanımlı değil." };
   }
@@ -49,7 +55,7 @@ export async function translateTurkishFields(values: Record<string, string>) {
                     },
                     required: ["field", "en", "es"]
                   }
-                },
+                }
               },
               required: ["translations"]
             },
@@ -60,9 +66,9 @@ export async function translateTurkishFields(values: Record<string, string>) {
     });
 
     if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      console.error("OpenAI translation failed", response.status, body.slice(0, 500));
-      return { error: `OpenAI çeviri isteği başarısız oldu (${response.status}).` };
+      const message = await openAIErrorMessage(response, "OpenAI çeviri isteği");
+      console.error("OpenAI translation failed", message);
+      return { error: message, status: response.status };
     }
 
     const data = (await response.json()) as {

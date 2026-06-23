@@ -1,9 +1,9 @@
 import { createAllergenAction, deleteAllergenAction, updateAllergenAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
-import { TranslateButton } from "@/components/admin/translate-button";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { LabeledField } from "@/components/forms/labeled-field";
+import { TranslatedInputField } from "@/components/forms/translated-input-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,6 @@ function AllergenForm({
   return (
     <form action={action} className="space-y-3">
       {item ? <input type="hidden" name="id" value={item.id} /> : null}
-      <TranslateButton />
       <LabeledField label="Sistem anahtarı">
         <Input name="key" defaultValue={item?.key} />
       </LabeledField>
@@ -64,21 +63,13 @@ function AllergenForm({
       <LabeledField label="Türkçe ad">
         <Input name="name_tr" defaultValue={tr?.name} required />
       </LabeledField>
-      <LabeledField label="İngilizce ad">
-        <Input name="name_en" defaultValue={en?.name} required />
-      </LabeledField>
-      <LabeledField label="İspanyolca ad">
-        <Input name="name_es" defaultValue={es?.name} required />
-      </LabeledField>
+      <TranslatedInputField label="İngilizce ad" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
+      <TranslatedInputField label="İspanyolca ad" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
       <LabeledField label="Türkçe açıklama">
         <Input name="description_tr" defaultValue={tr?.description ?? ""} />
       </LabeledField>
-      <LabeledField label="İngilizce açıklama">
-        <Input name="description_en" defaultValue={en?.description ?? ""} />
-      </LabeledField>
-      <LabeledField label="İspanyolca açıklama">
-        <Input name="description_es" defaultValue={es?.description ?? ""} />
-      </LabeledField>
+      <TranslatedInputField label="İngilizce açıklama" name="description_en" sourceName="description_tr" targetLocale="en" defaultValue={en?.description ?? ""} />
+      <TranslatedInputField label="İspanyolca açıklama" name="description_es" sourceName="description_tr" targetLocale="es" defaultValue={es?.description ?? ""} />
       <label className="flex items-center gap-2 text-sm">
         <input name="isActive" type="checkbox" defaultChecked={item?.isActive ?? true} />
         Aktif

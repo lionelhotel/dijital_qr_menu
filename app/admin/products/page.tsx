@@ -3,15 +3,17 @@ import {
   calculateProductNutritionAction,
   createProductAction,
   deleteProductAction,
-  updateProductAction
+  updateProductAction,
+  updateProductPriceAction
 } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
-import { formatPrice } from "@/lib/utils";
-import { TranslateButton } from "@/components/admin/translate-button";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { NutritionEnergyField } from "@/components/admin/nutrition-energy-field";
+import { QuickPriceForm } from "@/components/admin/quick-price-form";
 import { SortableList } from "@/components/admin/sortable-list";
 import { LabeledField } from "@/components/forms/labeled-field";
+import { TranslatedInputField } from "@/components/forms/translated-input-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,7 +64,11 @@ export default async function ProductsPage() {
                 <div className="min-w-0 flex-1">
                   <h2 className="truncate font-semibold">{product.translations.find((item) => item.locale === "tr")?.name}</h2>
                 </div>
-                <p className="shrink-0 font-semibold text-accent">{formatPrice(product.price.toString(), product.currency)}</p>
+                <QuickPriceForm
+                  productId={product.id}
+                  price={product.price.toString()}
+                  action={updateProductPriceAction}
+                />
               </summary>
               <div className="border-t border-border p-4">
                 <div className="mb-4 flex flex-wrap gap-2">
@@ -130,7 +136,6 @@ function ProductForm({
   return (
     <form action={action} className="mt-4 space-y-3">
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
-      <TranslateButton />
       <LabeledField label="Kategori">
         <select name="categoryId" defaultValue={product?.categoryId ?? ""} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm" required>
           <option value="">Kategori seç</option>
@@ -142,16 +147,18 @@ function ProductForm({
         </select>
       </LabeledField>
       <LabeledField label="Türkçe ürün adı"><Input name="name_tr" defaultValue={tr?.name} required /></LabeledField>
-      <LabeledField label="İngilizce ürün adı"><Input name="name_en" defaultValue={en?.name} required /></LabeledField>
-      <LabeledField label="İspanyolca ürün adı"><Input name="name_es" defaultValue={es?.name} required /></LabeledField>
+      <TranslatedInputField label="İngilizce ürün adı" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
+      <TranslatedInputField label="İspanyolca ürün adı" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
       <LabeledField label="Türkçe kısa açıklama"><Input name="short_tr" defaultValue={tr?.shortDescription ?? ""} required /></LabeledField>
-      <LabeledField label="İngilizce kısa açıklama"><Input name="short_en" defaultValue={en?.shortDescription ?? ""} required /></LabeledField>
-      <LabeledField label="İspanyolca kısa açıklama"><Input name="short_es" defaultValue={es?.shortDescription ?? ""} required /></LabeledField>
+      <TranslatedInputField label="İngilizce kısa açıklama" name="short_en" sourceName="short_tr" targetLocale="en" defaultValue={en?.shortDescription ?? ""} required />
+      <TranslatedInputField label="İspanyolca kısa açıklama" name="short_es" sourceName="short_tr" targetLocale="es" defaultValue={es?.shortDescription ?? ""} required />
       <LabeledField label="Türkçe içerik"><Input name="ingredients_tr" defaultValue={tr?.ingredients ?? ""} /></LabeledField>
-      <LabeledField label="İngilizce içerik"><Input name="ingredients_en" defaultValue={en?.ingredients ?? ""} /></LabeledField>
-      <LabeledField label="İspanyolca içerik"><Input name="ingredients_es" defaultValue={es?.ingredients ?? ""} /></LabeledField>
+      <TranslatedInputField label="İngilizce içerik" name="ingredients_en" sourceName="ingredients_tr" targetLocale="en" defaultValue={en?.ingredients ?? ""} />
+      <TranslatedInputField label="İspanyolca içerik" name="ingredients_es" sourceName="ingredients_tr" targetLocale="es" defaultValue={es?.ingredients ?? ""} />
       <LabeledField label="Fiyat"><Input name="price" type="number" step="0.01" defaultValue={product?.price?.toString()} required /></LabeledField>
-      <LabeledField label="1 porsiyon kalori (kcal)"><Input name="calories" type="number" min={0} defaultValue={product?.calories ?? ""} /></LabeledField>
+      <LabeledField label="1 porsiyon kalori (kcal) ve enerji">
+        <NutritionEnergyField defaultCalories={product?.calories} />
+      </LabeledField>
       <LabeledField label="Para birimi"><Input name="currency" defaultValue={product?.currency ?? "TRY"} /></LabeledField>
       <LabeledField label="Acılık seviyesi"><Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} /></LabeledField>
       <LabeledField label="Mevcut görsel URL"><Input name="imageUrl" defaultValue={product?.mainImageUrl ?? ""} /></LabeledField>

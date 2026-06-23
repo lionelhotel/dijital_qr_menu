@@ -14,6 +14,18 @@ export function AdminFlash() {
   const [flash, setFlash] = useState<Flash | null>(null);
 
   useEffect(() => {
+    function parseFlash(raw: string) {
+      let decoded = raw;
+      for (let index = 0; index < 3; index += 1) {
+        try {
+          decoded = decodeURIComponent(decoded);
+        } catch {
+          break;
+        }
+      }
+      return JSON.parse(decoded) as Flash;
+    }
+
     function readFlash() {
       const raw = document.cookie
         .split("; ")
@@ -22,7 +34,7 @@ export function AdminFlash() {
       if (!raw) return;
 
       try {
-        const parsed = JSON.parse(decodeURIComponent(raw)) as Flash;
+        const parsed = parseFlash(raw);
         setFlash(parsed);
         document.cookie = "admin_flash=; path=/; max-age=0; SameSite=Lax";
       } catch {
@@ -30,9 +42,18 @@ export function AdminFlash() {
       }
     }
 
+    function handleFlash(event: Event) {
+      const customEvent = event as CustomEvent<Flash>;
+      if (customEvent.detail) setFlash(customEvent.detail);
+    }
+
     readFlash();
+    window.addEventListener("admin-flash", handleFlash);
     const timer = window.setInterval(readFlash, 800);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.removeEventListener("admin-flash", handleFlash);
+      window.clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {

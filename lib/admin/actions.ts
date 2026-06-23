@@ -7,6 +7,7 @@ import { errorMessage } from "@/lib/admin/error-message";
 import { setAdminFlash } from "@/lib/admin/flash";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
+import { isOpenAIError } from "@/lib/openai/errors";
 import { estimateCaloriesPerPortion } from "@/lib/openai/nutrition";
 import { storeImage } from "@/lib/uploads/images";
 import { slugify } from "@/lib/utils";
@@ -227,6 +228,32 @@ export async function calculateProductNutritionAction(formData: FormData) {
   } catch (error) {
     console.error("Nutrition calculation failed", error);
     await setAdminFlash("error", `Kalori hesaplanamadı: ${errorMessage(error)}`);
+  }
+  revalidatePath("/");
+}
+
+export async function updateProductPriceAction(formData: FormData) {
+  const user = await requireAdmin();
+  try {
+    const id = requiredId(formData);
+    const price = Number(formData.get("price"));
+    if (!Number.isFinite(price) || price <= 0) throw new Error("Geçerli bir fiyat girin.");
+
+    await prisma.product.update({
+      where: { id },
+      data: { price, updatedBy: user.id }
+    });
+    await audit({
+      userId: user.id,
+      action: AuditAction.UPDATE,
+      resourceType: "ProductPrice",
+      resourceId: id,
+      newValue: { price }
+    });
+    await setAdminFlash("success", "Ürün fiyatı başarıyla güncellendi.");
+  } catch (error) {
+    console.error("Product price update failed", error);
+    await setAdminFlash("error", `Fiyat güncellenemedi: ${errorMessage(error)}`);
   }
   revalidatePath("/");
 }
@@ -620,7 +647,7 @@ async function maybeCalculateAndStoreNutrition(productId: string) {
       portion: product.portion
     });
 
-    if (!estimate) return { ok: false, reason: "Nutrition estimate unavailable" };
+    if (isOpenAIError(estimate)) return { ok: false, reason: estimate.error };
     await prisma.product.update({
       where: { id: productId },
       data: { calories: estimate.calories }

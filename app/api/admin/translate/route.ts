@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
+import { isOpenAIError } from "@/lib/openai/errors";
 import { translateTurkishFields } from "@/lib/openai/translate";
 
 export async function POST(request: Request) {
@@ -12,8 +13,8 @@ export async function POST(request: Request) {
   }
 
   const result = await translateTurkishFields(values);
-  if ("error" in result) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
+  if (isOpenAIError(result)) {
+    return NextResponse.json({ error: result.error }, { status: result.status ?? 400 });
   }
 
   return NextResponse.json(result);
