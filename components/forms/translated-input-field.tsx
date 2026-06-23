@@ -8,6 +8,7 @@ type TranslatedInputFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   name: string;
   sourceName: string;
   targetLocale: "en" | "es";
+  fieldClassName?: string;
 };
 
 export function TranslatedInputField({
@@ -15,10 +16,11 @@ export function TranslatedInputField({
   name,
   sourceName,
   targetLocale,
+  fieldClassName,
   ...inputProps
 }: TranslatedInputFieldProps) {
   return (
-    <LabeledField label={label}>
+    <LabeledField label={label} className={fieldClassName}>
       <div className="flex gap-2">
         <Input name={name} {...inputProps} />
         <FieldTranslateButton sourceName={sourceName} targetName={name} targetLocale={targetLocale} />

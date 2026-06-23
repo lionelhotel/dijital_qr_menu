@@ -21,9 +21,9 @@ export function MediaUploadForm({
   }
 
   return (
-    <form action={action} className="grid gap-3">
+    <form action={action} className="grid gap-3 xl:grid-cols-[minmax(280px,1fr)_minmax(360px,1fr)_auto] xl:items-end">
       <div
-        className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted p-4 text-center"
+        className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted p-4 text-center xl:min-h-24"
         onClick={() => inputRef.current?.click()}
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {

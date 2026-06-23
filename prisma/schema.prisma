@@ -412,6 +412,7 @@ model Media {
   width        Int?
   height       Int?
   url          String
+  tags         String?
   alt          Json?
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())

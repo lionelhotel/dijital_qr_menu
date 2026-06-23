@@ -1,8 +1,6 @@
-import Image from "next/image";
 import {
   createMediaCategoryAction,
   deleteMediaCategoryAction,
-  moveMediaAction,
   updateMediaCategoryAction,
   uploadMediaAction
 } from "@/lib/admin/actions";
@@ -11,6 +9,7 @@ import { prisma } from "@/lib/database/prisma";
 import { syncStorageMedia } from "@/lib/uploads/sync-media";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
+import { MediaLibraryManager } from "@/components/admin/media-library-manager";
 import { MediaUploadForm } from "@/components/admin/media-upload-form";
 import { LabeledField } from "@/components/forms/labeled-field";
 import { Button } from "@/components/ui/button";
@@ -36,80 +35,52 @@ export default async function MediaPage() {
   return (
     <AdminShell>
       <h1 className="font-serif text-3xl">Medya Kütüphanesi</h1>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[420px_1fr]">
-        <div className="space-y-6">
-          <Card className="p-4">
-            <h2 className="font-semibold">Toplu görsel yükle</h2>
-            <div className="mt-4">
-              <MediaUploadForm categories={categories} action={uploadMediaAction} />
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <h2 className="font-semibold">Medya kategorisi oluştur</h2>
-            <MediaCategoryForm action={createMediaCategoryAction} />
-          </Card>
-
-          <div className="space-y-3">
-            {categories.map((category) => (
-              <Card key={category.id} className="p-4">
-                <MediaCategoryForm action={updateMediaCategoryAction} category={category} />
-                <form action={deleteMediaCategoryAction} className="mt-3">
-                  <input type="hidden" name="id" value={category.id} />
-                  <ConfirmSubmitButton
-                    variant="outline"
-                    message="Bu medya kategorisi silinecek. Bu kategoriye bağlı görseller arşivden kaldırılabilir. Devam etmek istiyor musunuz?"
-                  >
-                    Kategoriyi sil
-                  </ConfirmSubmitButton>
-                </form>
-              </Card>
-            ))}
+      <div className="mt-6 space-y-6">
+        <Card className="p-4">
+          <h2 className="font-semibold">Görsel yükle</h2>
+          <div className="mt-4 border-b border-border pb-4">
+            <h3 className="text-sm font-semibold">Medya kategorisi oluştur</h3>
+            <MediaCategoryForm action={createMediaCategoryAction} variant="create" />
           </div>
-        </div>
-
-        <div>
-          <Card className="p-4">
-            <h2 className="font-semibold">Görselleri kategoriye taşı</h2>
-            <form action={moveMediaAction} className="mt-3">
-              <div className="mb-4 flex flex-wrap items-end gap-3">
-                <LabeledField label="Hedef kategori" className="min-w-60">
-                  <select name="categoryId" className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm">
-                    <option value="">Kategorisiz</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>{category.name}</option>
-                    ))}
-                  </select>
-                </LabeledField>
-                <Button type="submit">Seçilenleri taşı</Button>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {media.map((item) => (
-                  <label key={item.id} className="group overflow-hidden rounded-lg border border-border bg-card shadow-soft">
-                    <div className="relative">
-                      <Image
-                        src={item.url}
-                        alt={item.originalName}
-                        width={420}
-                        height={260}
-                        className="aspect-video w-full object-cover transition group-hover:opacity-80"
-                      />
-                      <input name="mediaIds" value={item.id} type="checkbox" className="absolute left-3 top-3 h-5 w-5" />
-                    </div>
-                    <div className="p-3 text-sm">
-                      <p className="truncate font-medium">{item.originalName}</p>
-                      <p className="text-muted-foreground">
-                        {item.category?.name ?? "Kategorisiz"} · {item.width ?? "-"}x{item.height ?? "-"} · {Math.round(item.size / 1024)} KB
-                      </p>
-                      <p className="mt-1 truncate text-xs text-muted-foreground">{item.url}</p>
-                    </div>
-                  </label>
+          <div className="pt-4">
+            <MediaUploadForm categories={categories} action={uploadMediaAction} />
+          </div>
+          {categories.length > 0 ? (
+            <details className="mt-4 rounded-lg border border-border p-3">
+              <summary className="cursor-pointer text-sm font-semibold">Medya kategorilerini düzenle</summary>
+              <div className="mt-3 grid gap-3 xl:grid-cols-2">
+                {categories.map((category) => (
+                  <Card key={category.id} className="p-4">
+                    <MediaCategoryForm action={updateMediaCategoryAction} category={category} />
+                    <form action={deleteMediaCategoryAction} className="mt-3">
+                      <input type="hidden" name="id" value={category.id} />
+                      <ConfirmSubmitButton
+                        variant="outline"
+                        message="Bu medya kategorisi silinecek. Bu kategoriye bağlı görseller arşivden kaldırılabilir. Devam etmek istiyor musunuz?"
+                      >
+                        Kategoriyi sil
+                      </ConfirmSubmitButton>
+                    </form>
+                  </Card>
                 ))}
               </div>
-            </form>
-          </Card>
-        </div>
+            </details>
+          ) : null}
+        </Card>
+
+        <Card className="p-4">
+          <h2 className="mb-4 font-semibold">Medya kütüphanesi</h2>
+          <MediaLibraryManager
+            categories={categories}
+            media={media.map((item) => ({
+              id: item.id,
+              url: item.url,
+              originalName: item.originalName,
+              categoryId: item.categoryId,
+              tags: item.tags
+            }))}
+          />
+        </Card>
       </div>
     </AdminShell>
   );
@@ -117,13 +88,17 @@ export default async function MediaPage() {
 
 function MediaCategoryForm({
   action,
-  category
+  category,
+  variant = "edit"
 }: {
   action: (formData: FormData) => Promise<void>;
   category?: { id: string; name: string; slug: string; description: string | null; sortOrder: number };
+  variant?: "create" | "edit";
 }) {
+  const isCreate = variant === "create";
+
   return (
-    <form action={action} className="mt-4 space-y-3">
+    <form action={action} className={isCreate ? "mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_2fr_120px_auto]" : "mt-4 space-y-3"}>
       {category ? <input type="hidden" name="id" value={category.id} /> : null}
       <LabeledField label="Kategori adı">
         <Input name="name" defaultValue={category?.name} required />
@@ -137,7 +112,7 @@ function MediaCategoryForm({
       <LabeledField label="Sıra">
         <Input name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 0} />
       </LabeledField>
-      <Button type="submit">Kaydet</Button>
+      <Button type="submit" className={isCreate ? "self-end" : undefined}>Kaydet</Button>
     </form>
   );
 }

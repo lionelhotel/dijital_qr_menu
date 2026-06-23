@@ -20,21 +20,34 @@ export default async function AllergensPage() {
   return (
     <AdminShell>
       <h1 className="font-serif text-3xl">Alerjenler</h1>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[380px_1fr]">
+      <div className="mt-6 space-y-6">
         <Card className="p-4">
-          <h2 className="font-semibold">Alerjen ekle</h2>
-          <AllergenForm action={createAllergenAction} />
+          <h2 className="font-semibold">Alerjen oluştur</h2>
+          <AllergenForm action={createAllergenAction} variant="create" />
         </Card>
-        <div className="grid gap-4 lg:grid-cols-2">
-          {allergens.map((item) => (
-            <Card key={item.id} className="p-4">
-              <AllergenForm action={updateAllergenAction} item={item} />
-              <form action={deleteAllergenAction} className="mt-3">
-                <input type="hidden" name="id" value={item.id} />
-                <Button type="submit" variant="outline">Sil</Button>
-              </form>
-            </Card>
-          ))}
+
+        <div className="space-y-3">
+          {allergens.map((item) => {
+            const name = item.translations.find((translation) => translation.locale === "tr")?.name ?? item.key;
+
+            return (
+              <details key={item.id} className="group rounded-lg border border-border bg-card shadow-soft">
+                <summary className="flex cursor-pointer list-none items-center gap-3 p-4 marker:hidden">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xl">
+                    {item.icon}
+                  </span>
+                  <h2 className="min-w-0 truncate font-semibold">{name}</h2>
+                </summary>
+                <div className="border-t border-border p-4">
+                  <AllergenForm action={updateAllergenAction} item={item} />
+                  <form action={deleteAllergenAction} className="mt-3">
+                    <input type="hidden" name="id" value={item.id} />
+                    <Button type="submit" variant="outline">Sil</Button>
+                  </form>
+                </div>
+              </details>
+            );
+          })}
         </div>
       </div>
     </AdminShell>
@@ -43,34 +56,42 @@ export default async function AllergensPage() {
 
 function AllergenForm({
   action,
-  item
+  item,
+  variant = "edit"
 }: {
   action: (formData: FormData) => Promise<void>;
   item?: { id: string; key: string; icon: string; isActive: boolean; translations: { locale: string; name: string; description: string | null }[] };
+  variant?: "create" | "edit";
 }) {
   const tr = item?.translations.find((translation) => translation.locale === "tr");
   const en = item?.translations.find((translation) => translation.locale === "en");
   const es = item?.translations.find((translation) => translation.locale === "es");
+  const isCreate = variant === "create";
+  const formClassName = isCreate ? "mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4" : "space-y-3";
+  const wideFieldClassName = isCreate ? "md:col-span-2" : undefined;
+  const fullFieldClassName = isCreate ? "md:col-span-2 xl:col-span-4" : undefined;
 
   return (
-    <form action={action} className="space-y-3">
+    <form action={action} className={formClassName}>
       {item ? <input type="hidden" name="id" value={item.id} /> : null}
-      <KeyIconFields sourceName="name_tr" defaultKey={item?.key} defaultIcon={item?.icon} type="allergen" />
+      <div className={wideFieldClassName}>
+        <KeyIconFields sourceName="name_tr" defaultKey={item?.key} defaultIcon={item?.icon} type="allergen" />
+      </div>
       <LabeledField label="Alerjen Ürün">
         <Input name="name_tr" defaultValue={tr?.name} required />
       </LabeledField>
       <TranslatedInputField label="İngilizce ad" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
       <TranslatedInputField label="İspanyolca ad" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
-      <LabeledField label="Türkçe açıklama">
+      <LabeledField label="Türkçe açıklama" className={wideFieldClassName}>
         <Input name="description_tr" defaultValue={tr?.description ?? ""} />
       </LabeledField>
-      <TranslatedInputField label="İngilizce açıklama" name="description_en" sourceName="description_tr" targetLocale="en" defaultValue={en?.description ?? ""} />
-      <TranslatedInputField label="İspanyolca açıklama" name="description_es" sourceName="description_tr" targetLocale="es" defaultValue={es?.description ?? ""} />
-      <label className="flex items-center gap-2 text-sm">
+      <TranslatedInputField label="İngilizce açıklama" name="description_en" sourceName="description_tr" targetLocale="en" defaultValue={en?.description ?? ""} fieldClassName={wideFieldClassName} />
+      <TranslatedInputField label="İspanyolca açıklama" name="description_es" sourceName="description_tr" targetLocale="es" defaultValue={es?.description ?? ""} fieldClassName={wideFieldClassName} />
+      <label className={`flex items-center gap-2 text-sm ${fullFieldClassName ?? ""}`}>
         <input name="isActive" type="checkbox" defaultChecked={item?.isActive ?? true} />
         Aktif
       </label>
-      <Button type="submit">Kaydet</Button>
+      <Button type="submit" className={isCreate ? "w-fit" : undefined}>Kaydet</Button>
     </form>
   );
 }

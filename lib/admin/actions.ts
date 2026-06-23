@@ -526,6 +526,116 @@ export async function moveMediaAction(formData: FormData) {
   await logAndRevalidate(user.id, AuditAction.UPDATE, "Media:move", ids.join(","));
 }
 
+export async function updateMediaTagsAction(formData: FormData) {
+  const user = await requireAdmin();
+  const id = requiredId(formData);
+  const tags = String(formData.get("tags") || "").trim() || null;
+  await prisma.media.update({ where: { id }, data: { tags, updatedBy: user.id } });
+  await audit({
+    userId: user.id,
+    action: AuditAction.UPDATE,
+    resourceType: "Media:tags",
+    resourceId: id,
+    newValue: { tags }
+  });
+}
+
+export async function bulkMediaAction(formData: FormData) {
+  const user = await requireAdmin();
+  const ids = readMany(formData, "mediaIds");
+  const operation = String(formData.get("operation") || "");
+  const categoryId = String(formData.get("categoryId") || "") || null;
+  if (!ids.length) throw new Error("İşlem yapılacak görsel seçin.");
+
+  if (operation === "delete") {
+    await prisma.media.updateMany({
+      where: { id: { in: ids } },
+      data: { deletedAt: new Date(), isActive: false, updatedBy: user.id }
+    });
+    await logAndRevalidate(user.id, AuditAction.DELETE, "Media:bulk-delete", ids.join(","));
+    return;
+  }
+
+  if (operation === "move") {
+    await prisma.media.updateMany({
+      where: { id: { in: ids } },
+      data: { categoryId, updatedBy: user.id }
+    });
+    await logAndRevalidate(user.id, AuditAction.UPDATE, "Media:bulk-move", ids.join(","));
+    return;
+  }
+
+  if (operation === "copy") {
+    const items = await prisma.media.findMany({ where: { id: { in: ids }, deletedAt: null } });
+    const copied = await prisma.$transaction(
+      items.map((item) =>
+        prisma.media.create({
+          data: {
+            kind: item.kind,
+            categoryId,
+            originalName: item.originalName,
+            fileName: item.fileName,
+            mimeType: item.mimeType,
+            size: item.size,
+            width: item.width,
+            height: item.height,
+            url: item.url,
+            tags: item.tags,
+            alt: item.alt ?? undefined,
+            createdBy: user.id
+          }
+        })
+      )
+    );
+    await audit({
+      userId: user.id,
+      action: AuditAction.CREATE,
+      resourceType: "Media:bulk-copy",
+      newValue: { sourceIds: ids, copiedIds: copied.map((item) => item.id) }
+    });
+    await setAdminFlash("success", "Seçilen görseller başarıyla kopyalandı.");
+    revalidatePath("/");
+    return;
+  }
+
+  throw new Error("Geçersiz medya işlemi.");
+}
+
+export async function createQrCodeAction(formData: FormData) {
+  const user = await requireAdmin();
+  const name = String(formData.get("name") || "").trim();
+  const targetUrl = String(formData.get("targetUrl") || "").trim();
+  const location = String(formData.get("location") || "").trim() || null;
+
+  if (!name) throw new Error("QR kod adı gerekli.");
+  if (!targetUrl) throw new Error("Hedef URL gerekli.");
+
+  const qrCode = await prisma.qrCode.create({
+    data: {
+      name,
+      targetUrl,
+      location,
+      createdBy: user.id
+    }
+  });
+
+  await logAndRevalidate(user.id, AuditAction.CREATE, "QrCode", qrCode.id);
+}
+
+export async function deleteQrCodeAction(formData: FormData) {
+  const user = await requireAdmin();
+  const id = requiredId(formData);
+  await prisma.qrCode.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+      isActive: false,
+      updatedBy: user.id
+    }
+  });
+  await logAndRevalidate(user.id, AuditAction.DELETE, "QrCode", id);
+}
+
 function readMenuForm(formData: FormData) {
   const name = readLocalized(formData, "name");
   return {
