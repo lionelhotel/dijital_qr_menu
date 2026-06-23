@@ -46,6 +46,7 @@ export const productSchema = z.object({
   price: z.coerce.number().positive(),
   calories: z.coerce.number().int().min(0).optional().nullable(),
   currency: z.string().default("TRY"),
+  prepMinutes: z.coerce.number().int().min(0).optional().nullable(),
   spicyLevel: z.coerce.number().int().min(0).max(5).default(0),
   isActive: z.coerce.boolean().default(true),
   isAvailable: z.coerce.boolean().default(true),

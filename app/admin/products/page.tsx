@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Search } from "lucide-react";
 import {
   calculateProductNutritionAction,
   createProductAction,
@@ -10,6 +11,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CalculateNutritionForm } from "@/components/admin/calculate-nutrition-form";
+import { MediaPickerField } from "@/components/admin/media-picker-field";
 import { NutritionEnergyField } from "@/components/admin/nutrition-energy-field";
 import { ProductPriceField } from "@/components/admin/product-price-field";
 import { QuickPriceForm } from "@/components/admin/quick-price-form";
@@ -20,12 +22,28 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ q?: string }>;
+}) {
   await requireAdmin();
-  const [categories, products, menus, allergens] = await Promise.all([
+  const query = (await searchParams)?.q?.trim() ?? "";
+  const productWhere = query
+    ? {
+        deletedAt: null,
+        OR: [
+          { translations: { some: { name: { contains: query, mode: "insensitive" as const } } } },
+          { translations: { some: { shortDescription: { contains: query, mode: "insensitive" as const } } } },
+          { category: { translations: { some: { name: { contains: query, mode: "insensitive" as const } } } } }
+        ]
+      }
+    : { deletedAt: null };
+
+  const [categories, products, menus, allergens, media, mediaCategories] = await Promise.all([
     prisma.category.findMany({ where: { deletedAt: null }, orderBy: { sortOrder: "asc" }, include: { translations: true } }),
     prisma.product.findMany({
-      where: { deletedAt: null },
+      where: productWhere,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       include: {
         translations: true,
@@ -35,7 +53,9 @@ export default async function ProductsPage() {
       }
     }),
     prisma.menu.findMany({ where: { deletedAt: null }, orderBy: { sortOrder: "asc" }, include: { translations: true } }),
-    prisma.allergen.findMany({ where: { deletedAt: null }, orderBy: { key: "asc" }, include: { translations: true } })
+    prisma.allergen.findMany({ where: { deletedAt: null }, orderBy: { key: "asc" }, include: { translations: true } }),
+    prisma.media.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 200 }),
+    prisma.mediaCategory.findMany({ where: { deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
   ]);
 
   return (
@@ -44,11 +64,17 @@ export default async function ProductsPage() {
       <div className="mt-6 grid gap-6 xl:grid-cols-[440px_1fr]">
         <Card className="p-4">
           <h2 className="font-semibold">Ürün oluştur</h2>
-          <ProductForm action={createProductAction} categories={categories} menus={menus} allergens={allergens} />
+          <ProductForm action={createProductAction} categories={categories} menus={menus} allergens={allergens} media={media} mediaCategories={mediaCategories} />
         </Card>
         <div className="space-y-4">
           <Card className="p-4">
             <h2 className="mb-3 font-semibold">Sürükle bırak sıralama</h2>
+            <form className="mb-4">
+              <label className="relative block">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input name="q" defaultValue={query} className="pl-10" placeholder="Ürün ara" />
+              </label>
+            </form>
             <SortableList
               type="product"
               items={products.map((product) => ({
@@ -66,11 +92,7 @@ export default async function ProductsPage() {
                 <div className="min-w-0 flex-1">
                   <h2 className="truncate font-semibold">{product.translations.find((item) => item.locale === "tr")?.name}</h2>
                 </div>
-                <QuickPriceForm
-                  productId={product.id}
-                  price={product.price.toString()}
-                  action={updateProductPriceAction}
-                />
+                <QuickPriceForm productId={product.id} price={product.price.toString()} action={updateProductPriceAction} />
               </summary>
               <div className="border-t border-border p-4">
                 <div className="mb-4 flex flex-wrap gap-2">
@@ -86,6 +108,8 @@ export default async function ProductsPage() {
                   categories={categories}
                   menus={menus}
                   allergens={allergens}
+                  media={media}
+                  mediaCategories={mediaCategories}
                 />
               </div>
             </details>
@@ -97,13 +121,17 @@ export default async function ProductsPage() {
 }
 
 type Translation = { locale: string; name: string; shortDescription?: string | null; ingredients?: string | null };
+type MediaItem = { id: string; url: string; originalName: string; category: { name: string } | null };
+type MediaCategory = { id: string; name: string };
 
 function ProductForm({
   action,
   product,
   categories,
   menus,
-  allergens
+  allergens,
+  media,
+  mediaCategories
 }: {
   action: (formData: FormData) => Promise<void>;
   product?: {
@@ -112,6 +140,7 @@ function ProductForm({
     price: unknown;
     calories: number | null;
     currency: string;
+    prepMinutes: number | null;
     spicyLevel: number;
     mainImageUrl: string | null;
     isActive: boolean;
@@ -125,6 +154,8 @@ function ProductForm({
   categories: { id: string; translations: { locale: string; name: string }[] }[];
   menus: { id: string; translations: { locale: string; name: string }[] }[];
   allergens: { id: string; key: string; translations: { locale: string; name: string }[] }[];
+  media: MediaItem[];
+  mediaCategories: MediaCategory[];
 }) {
   const tr = product?.translations.find((item) => item.locale === "tr");
   const en = product?.translations.find((item) => item.locale === "en");
@@ -159,10 +190,18 @@ function ProductForm({
         <NutritionEnergyField productId={product?.id} defaultCalories={product?.calories} />
       </LabeledField>
       <LabeledField label="Para birimi"><Input name="currency" defaultValue={product?.currency ?? "TRY"} /></LabeledField>
+      <LabeledField label="Hazırlanma süresi (dk)"><Input name="prepMinutes" type="number" min={0} defaultValue={product?.prepMinutes ?? ""} /></LabeledField>
       <LabeledField label="Acılık seviyesi"><Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} /></LabeledField>
-      <LabeledField label="Mevcut görsel URL"><Input name="imageUrl" defaultValue={product?.mainImageUrl ?? ""} /></LabeledField>
-      <LabeledField label="Yerel ürün görseli" hint="Önerilen: 1200x900 px veya daha büyük, en fazla 4 MB.">
-        <input name="image" type="file" accept="image/jpeg,image/png,image/webp" className="w-full text-sm" />
+      <LabeledField label="Ürün görseli">
+        <MediaPickerField
+          name="imageUrl"
+          defaultValue={product?.mainImageUrl ?? ""}
+          media={media}
+          categories={mediaCategories}
+          label="Ürün görseli seç"
+          targetWidth={1200}
+          targetHeight={900}
+        />
       </LabeledField>
       <fieldset className="rounded-md border border-border p-3">
         <legend className="px-1 text-sm font-medium">Bu ürün hangi menülerde görünsün?</legend>

@@ -14,10 +14,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Dosya bulunamadı." }, { status: 400 });
   }
 
-  const stored = await storeImage(file);
+  const width = Number(formData.get("width") || 1600);
+  const heightValue = String(formData.get("height") || "");
+  const stored = await storeImage(file, {
+    width: Number.isFinite(width) ? width : 1600,
+    height: heightValue ? Number(heightValue) : undefined
+  });
   const media = await prisma.media.create({
     data: {
       kind: "IMAGE",
+      categoryId: String(formData.get("categoryId") || "") || null,
       originalName: file.name,
       fileName: stored.fileName,
       mimeType: stored.mimeType,

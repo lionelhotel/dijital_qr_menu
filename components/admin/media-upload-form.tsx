@@ -1,0 +1,70 @@
+"use client";
+
+import { Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { LabeledField } from "@/components/forms/labeled-field";
+
+export function MediaUploadForm({
+  categories,
+  action
+}: {
+  categories: { id: string; name: string }[];
+  action: (formData: FormData) => Promise<void>;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [names, setNames] = useState<string[]>([]);
+
+  function readFiles(files: FileList | null) {
+    setNames(Array.from(files ?? []).map((file) => file.name));
+  }
+
+  return (
+    <form action={action} className="grid gap-3">
+      <div
+        className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted p-4 text-center"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          if (!inputRef.current) return;
+          inputRef.current.files = event.dataTransfer.files;
+          readFiles(event.dataTransfer.files);
+        }}
+      >
+        <Upload className="mb-2 h-6 w-6 text-muted-foreground" />
+        <p className="text-sm font-medium">Görselleri buraya bırakın veya seçin</p>
+        <p className="text-xs text-muted-foreground">Toplu yükleme desteklenir. JPEG, PNG, WEBP.</p>
+        {names.length ? <p className="mt-2 text-xs text-muted-foreground">{names.length} dosya seçildi</p> : null}
+      </div>
+      <input
+        ref={inputRef}
+        name="files"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        required
+        className="hidden"
+        onChange={(event) => readFiles(event.target.files)}
+      />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <LabeledField label="Medya kategorisi">
+          <select name="categoryId" className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm">
+            <option value="">Kategorisiz</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
+        </LabeledField>
+        <LabeledField label="Hedef genişlik">
+          <Input name="width" type="number" min={320} defaultValue={1600} />
+        </LabeledField>
+        <LabeledField label="Hedef yükseklik">
+          <Input name="height" type="number" min={0} placeholder="Boş bırakılabilir" />
+        </LabeledField>
+      </div>
+      <Button type="submit">Görselleri yükle</Button>
+    </form>
+  );
+}

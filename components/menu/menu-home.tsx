@@ -15,6 +15,7 @@ type MenuHomeProps = {
     venueName: string;
     logoUrl?: string | null;
     coverImageUrl?: string | null;
+    welcomeText?: unknown;
   };
   categories: {
     id: string;
@@ -31,9 +32,15 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
     <main className="min-h-screen pb-12">
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
-            LH
-          </div>
+          {business.logoUrl ? (
+            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-card">
+              <Image src={business.logoUrl} alt={business.businessName} fill className="object-contain p-1" />
+            </div>
+          ) : (
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
+              LH
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{business.businessName}</p>
             <p className="truncate text-xs text-muted-foreground">{business.venueName}</p>
@@ -68,7 +75,9 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
             ) : null}
             <h1 className="font-serif text-3xl leading-tight sm:text-5xl">{business.businessName}</h1>
             <p className="mt-1 text-base text-primary-foreground/90 sm:text-lg">{business.venueName}</p>
-            <p className="mt-3 max-w-xl text-sm text-primary-foreground/90 sm:text-base">{t(locale, "welcome")}</p>
+            <p className="mt-3 max-w-xl text-sm text-primary-foreground/90 sm:text-base">
+              {localizedSetting(business.welcomeText, locale) || t(locale, "welcome")}
+            </p>
           </div>
         </div>
       </section>
@@ -111,4 +120,10 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
       </section>
     </main>
   );
+}
+
+function localizedSetting(value: unknown, locale: Locale) {
+  if (!value || typeof value !== "object") return "";
+  const record = value as Record<string, unknown>;
+  return String(record[locale] || record.tr || record.en || "");
 }

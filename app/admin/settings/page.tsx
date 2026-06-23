@@ -2,6 +2,7 @@ import { updateSettingsAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { MediaPickerField } from "@/components/admin/media-picker-field";
 import { LabeledField } from "@/components/forms/labeled-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,10 +10,13 @@ import { Input } from "@/components/ui/input";
 
 export default async function SettingsPage() {
   await requireAdmin();
-  const [business, theme] = await Promise.all([
+  const [business, theme, media, mediaCategories] = await Promise.all([
     prisma.businessSetting.findFirst(),
-    prisma.themeSetting.findFirst()
+    prisma.themeSetting.findFirst(),
+    prisma.media.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 200 }),
+    prisma.mediaCategory.findMany({ where: { deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
   ]);
+  const welcome = localizedSetting(business?.welcomeText);
 
   return (
     <AdminShell>
@@ -29,6 +33,15 @@ export default async function SettingsPage() {
             <LabeledField label="Alt başlık">
               <Input name="venueName" defaultValue={business?.venueName} required />
             </LabeledField>
+            <LabeledField label="Ana menü karşılama metni (TR)">
+              <Input name="welcome_tr" defaultValue={welcome.tr} />
+            </LabeledField>
+            <LabeledField label="Ana menü karşılama metni (EN)">
+              <Input name="welcome_en" defaultValue={welcome.en} />
+            </LabeledField>
+            <LabeledField label="Ana menü karşılama metni (ES)">
+              <Input name="welcome_es" defaultValue={welcome.es} />
+            </LabeledField>
             <LabeledField label="Web sitesi">
               <Input name="website" defaultValue={business?.website ?? ""} />
             </LabeledField>
@@ -42,16 +55,10 @@ export default async function SettingsPage() {
               <Input name="defaultCurrency" defaultValue={business?.defaultCurrency ?? "TRY"} />
             </LabeledField>
             <LabeledField label="Logo URL">
-              <Input name="logoUrl" defaultValue={business?.logoUrl ?? ""} />
-            </LabeledField>
-            <LabeledField label="Yerel logo yükle" hint="Önerilen: 512x512 px, en fazla 4 MB.">
-              <input name="logo" type="file" accept="image/jpeg,image/png,image/webp" className="w-full text-sm" />
+              <MediaPickerField name="logoUrl" defaultValue={business?.logoUrl ?? ""} media={media} categories={mediaCategories} label="Logo seç" targetWidth={512} targetHeight={512} />
             </LabeledField>
             <LabeledField label="Kapak görseli URL">
-              <Input name="coverImageUrl" defaultValue={business?.coverImageUrl ?? ""} />
-            </LabeledField>
-            <LabeledField label="Yerel kapak görseli yükle" hint="Önerilen: 1600x900 px veya daha büyük, en fazla 4 MB.">
-              <input name="coverImage" type="file" accept="image/jpeg,image/png,image/webp" className="w-full text-sm" />
+              <MediaPickerField name="coverImageUrl" defaultValue={business?.coverImageUrl ?? ""} media={media} categories={mediaCategories} label="Kapak görseli seç" targetWidth={1600} targetHeight={900} />
             </LabeledField>
           </div>
         </Card>
@@ -86,4 +93,14 @@ export default async function SettingsPage() {
       </form>
     </AdminShell>
   );
+}
+
+function localizedSetting(value: unknown) {
+  if (!value || typeof value !== "object") return { tr: "", en: "", es: "" };
+  const record = value as Record<string, unknown>;
+  return {
+    tr: String(record.tr ?? ""),
+    en: String(record.en ?? ""),
+    es: String(record.es ?? "")
+  };
 }

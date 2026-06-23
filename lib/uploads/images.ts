@@ -7,8 +7,8 @@ import sharp from "sharp";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-export async function storeImage(file: File) {
-  const maxMb = Number(process.env.MAX_UPLOAD_MB ?? 4);
+export async function storeImage(file: File, options: { width?: number; height?: number } = {}) {
+  const maxMb = Number(process.env.MAX_UPLOAD_MB ?? 25);
   if (!allowedTypes.has(file.type)) {
     throw new Error("Desteklenmeyen dosya tipi.");
   }
@@ -20,16 +20,24 @@ export async function storeImage(file: File) {
   await mkdir(uploadDir, { recursive: true });
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const image = sharp(buffer).rotate().resize({ width: 1600, withoutEnlargement: true });
-  const metadata = await image.metadata();
+  const image = sharp(buffer)
+    .rotate()
+    .resize({
+      width: options.width ?? 1600,
+      height: options.height,
+      fit: options.height ? "cover" : "inside",
+      withoutEnlargement: true
+    });
   const fileName = `${randomUUID()}.webp`;
   const target = path.join(uploadDir, fileName);
-  await writeFile(target, await image.webp({ quality: 82 }).toBuffer());
+  const output = await image.webp({ quality: 82 }).toBuffer();
+  const metadata = await sharp(output).metadata();
+  await writeFile(target, output);
 
   return {
     fileName,
     mimeType: "image/webp",
-    size: file.size,
+    size: output.byteLength,
     width: metadata.width,
     height: metadata.height,
     url: `/api/media/${fileName}`

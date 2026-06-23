@@ -51,6 +51,7 @@ export default async function CategoryMenuPage({
           currency: product.currency,
           portion: product.portion,
           calories: product.calories,
+          prepMinutes: product.prepMinutes,
           spicyLevel: product.spicyLevel,
           mainImageUrl: product.mainImageUrl,
           isAvailable: product.isAvailable,

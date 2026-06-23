@@ -28,7 +28,8 @@ export default async function LocalizedMenuPage({
         businessName: data.business?.businessName ?? "Lionel Hotel Istanbul",
         venueName: data.business?.venueName ?? "Restaurant & Bar",
         logoUrl: data.business?.logoUrl,
-        coverImageUrl: data.business?.coverImageUrl
+        coverImageUrl: data.business?.coverImageUrl,
+        welcomeText: data.business?.welcomeText
       }}
       categories={data.menus.map((menu) => ({
         id: menu.id,

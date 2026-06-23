@@ -3,6 +3,7 @@ import { createMenuAction, deleteMenuAction, updateMenuAction } from "@/lib/admi
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { MediaPickerField } from "@/components/admin/media-picker-field";
 import { SortableList } from "@/components/admin/sortable-list";
 import { LabeledField } from "@/components/forms/labeled-field";
 import { TranslatedInputField } from "@/components/forms/translated-input-field";
@@ -12,11 +13,15 @@ import { Input } from "@/components/ui/input";
 
 export default async function MenusPage() {
   await requireAdmin();
-  const menus = await prisma.menu.findMany({
-    where: { deletedAt: null },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    include: { translations: true, products: true }
-  });
+  const [menus, media, mediaCategories] = await Promise.all([
+    prisma.menu.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      include: { translations: true, products: true }
+    }),
+    prisma.media.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 200 }),
+    prisma.mediaCategory.findMany({ where: { deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
+  ]);
 
   return (
     <AdminShell>
@@ -27,7 +32,7 @@ export default async function MenusPage() {
       <div className="mt-6 grid gap-6 xl:grid-cols-[420px_1fr]">
         <Card className="p-4">
           <h2 className="font-semibold">Menü oluştur</h2>
-          <MenuForm action={createMenuAction} />
+          <MenuForm action={createMenuAction} media={media} mediaCategories={mediaCategories} />
         </Card>
         <div className="space-y-4">
           <Card className="p-4">
@@ -46,7 +51,7 @@ export default async function MenusPage() {
                 <div className="relative aspect-video overflow-hidden rounded-md bg-muted">
                   <Image src={menu.imageUrl ?? "/placeholders/category.svg"} alt={menu.slug} fill className="object-cover" />
                 </div>
-                <MenuForm action={updateMenuAction} menu={menu} />
+                <MenuForm action={updateMenuAction} menu={menu} media={media} mediaCategories={mediaCategories} />
                 <form action={deleteMenuAction} className="lg:col-start-2">
                   <input type="hidden" name="id" value={menu.id} />
                   <Button type="submit" variant="outline">Sil</Button>
@@ -62,7 +67,9 @@ export default async function MenusPage() {
 
 function MenuForm({
   action,
-  menu
+  menu,
+  media,
+  mediaCategories
 }: {
   action: (formData: FormData) => Promise<void>;
   menu?: {
@@ -73,6 +80,8 @@ function MenuForm({
     isActive: boolean;
     translations: { locale: string; name: string; description: string | null }[];
   };
+  media: { id: string; url: string; originalName: string; category: { name: string } | null }[];
+  mediaCategories: { id: string; name: string }[];
 }) {
   const tr = menu?.translations.find((item) => item.locale === "tr");
   const en = menu?.translations.find((item) => item.locale === "en");
@@ -88,9 +97,8 @@ function MenuForm({
       <TranslatedInputField label="İngilizce açıklama" name="description_en" sourceName="description_tr" targetLocale="en" defaultValue={en?.description ?? ""} />
       <TranslatedInputField label="İspanyolca açıklama" name="description_es" sourceName="description_tr" targetLocale="es" defaultValue={es?.description ?? ""} />
       <LabeledField label="URL slug"><Input name="slug" defaultValue={menu?.slug} /></LabeledField>
-      <LabeledField label="Mevcut görsel URL"><Input name="imageUrl" defaultValue={menu?.imageUrl ?? ""} /></LabeledField>
-      <LabeledField label="Yerel görsel yükle" hint="Önerilen: 1400x520 px veya daha büyük, en fazla 4 MB.">
-        <input name="image" type="file" accept="image/jpeg,image/png,image/webp" className="w-full text-sm" />
+      <LabeledField label="Mevcut görsel URL">
+        <MediaPickerField name="imageUrl" defaultValue={menu?.imageUrl ?? ""} media={media} categories={mediaCategories} label="Menü görseli seç" targetWidth={1400} targetHeight={520} />
       </LabeledField>
       <LabeledField label="Sıra"><Input name="sortOrder" type="number" defaultValue={menu?.sortOrder ?? 0} /></LabeledField>
       <label className="flex items-center gap-2 text-sm">

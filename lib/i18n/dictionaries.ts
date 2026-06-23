@@ -16,6 +16,8 @@ export const dictionary = {
     dietary: "Etiketler",
     calories: "Kalori",
     portion: "Porsiyon",
+    prepTime: "Hazırlanma süresi",
+    minutesShort: "dk",
     nutritionAverageNote: "1 porsiyon için ortalama olarak hesaplanmıştır.",
     notice:
       "Ürün içerikleri ve alerjen bilgileri hakkında detaylı bilgi için servis ekibimizle iletişime geçebilirsiniz.",
@@ -37,6 +39,8 @@ export const dictionary = {
     dietary: "Tags",
     calories: "Calories",
     portion: "Portion",
+    prepTime: "Preparation time",
+    minutesShort: "min",
     nutritionAverageNote: "Calculated as an average for one portion.",
     notice:
       "Please contact our service team for detailed information about ingredients and allergens.",
@@ -58,6 +62,8 @@ export const dictionary = {
     dietary: "Etiquetas",
     calories: "Calorías",
     portion: "Porción",
+    prepTime: "Tiempo de preparación",
+    minutesShort: "min",
     nutritionAverageNote: "Calculado como promedio para una porción.",
     notice:
       "Para información detallada sobre ingredientes y alérgenos, contacte con nuestro equipo de servicio.",

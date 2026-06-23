@@ -97,6 +97,8 @@ model BusinessSetting {
   defaultCurrency String   @default("TRY")
   taxIncluded     Boolean  @default(true)
   serviceText     Json?
+  welcomeText     Json?
+  welcomeSubText  Json?
   footerText      Json?
   allergenNotice  Json?
   openingHours    Json?
@@ -401,6 +403,8 @@ model AuditLog {
 model Media {
   id           String    @id @default(cuid())
   kind         MediaKind @default(IMAGE)
+  categoryId   String?
+  category     MediaCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   originalName String
   fileName     String
   mimeType     String
@@ -415,4 +419,18 @@ model Media {
   createdBy    String?
   updatedBy    String?
   deletedAt    DateTime?
+
+  @@index([categoryId])
+}
+
+model MediaCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  media       Media[]
 }

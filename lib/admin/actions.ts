@@ -33,7 +33,7 @@ const allergenKeywords: Record<string, string[]> = {
 export async function createMenuAction(formData: FormData) {
   const user = await requireAdmin();
   const parsed = menuSchema.parse(readMenuForm(formData));
-  const imageUrl = (await uploadedImageUrl(formData, "image")) || parsed.imageUrl || undefined;
+  const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1400, height: 520 })) || parsed.imageUrl || undefined;
 
   const menu = await prisma.menu.create({
     data: {
@@ -60,7 +60,7 @@ export async function updateMenuAction(formData: FormData) {
   const user = await requireAdmin();
   const id = requiredId(formData);
   const parsed = menuSchema.parse(readMenuForm(formData));
-  const imageUrl = (await uploadedImageUrl(formData, "image")) || parsed.imageUrl || undefined;
+  const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1400, height: 520 })) || parsed.imageUrl || undefined;
 
   await prisma.menu.update({
     where: { id },
@@ -102,7 +102,7 @@ export async function deleteMenuAction(formData: FormData) {
 export async function createCategoryAction(formData: FormData) {
   const user = await requireAdmin();
   const parsed = categorySchema.parse(readCategoryForm(formData));
-  const imageUrl = (await uploadedImageUrl(formData, "image")) || parsed.imageUrl || undefined;
+  const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1400, height: 520 })) || parsed.imageUrl || undefined;
 
   const category = await prisma.category.create({
     data: {
@@ -123,7 +123,7 @@ export async function updateCategoryAction(formData: FormData) {
   const user = await requireAdmin();
   const id = requiredId(formData);
   const parsed = categorySchema.parse(readCategoryForm(formData));
-  const imageUrl = (await uploadedImageUrl(formData, "image")) || parsed.imageUrl || undefined;
+  const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1400, height: 520 })) || parsed.imageUrl || undefined;
 
   await prisma.category.update({
     where: { id },
@@ -151,7 +151,7 @@ export async function deleteCategoryAction(formData: FormData) {
 export async function createProductAction(formData: FormData) {
   const user = await requireAdmin();
   const parsed = productSchema.parse(readProductForm(formData));
-  const imageUrl = (await uploadedImageUrl(formData, "image")) || parsed.imageUrl || undefined;
+  const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1200, height: 900 })) || parsed.imageUrl || undefined;
   const menuIds = readMany(formData, "menuIds");
   const allergenIds = await resolveAllergenIds(formData, parsed);
 
@@ -161,6 +161,7 @@ export async function createProductAction(formData: FormData) {
       price: parsed.price,
       calories: parsed.calories ?? undefined,
       currency: parsed.currency,
+      prepMinutes: parsed.prepMinutes ?? undefined,
       spicyLevel: parsed.spicyLevel,
       mainImageUrl: imageUrl,
       isActive: parsed.isActive,
@@ -182,7 +183,7 @@ export async function updateProductAction(formData: FormData) {
   const user = await requireAdmin();
   const id = requiredId(formData);
   const parsed = productSchema.parse(readProductForm(formData));
-  const imageUrl = (await uploadedImageUrl(formData, "image")) || parsed.imageUrl || undefined;
+  const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1200, height: 900 })) || parsed.imageUrl || undefined;
   const menuIds = readMany(formData, "menuIds");
   const allergenIds = await resolveAllergenIds(formData, parsed);
 
@@ -196,6 +197,7 @@ export async function updateProductAction(formData: FormData) {
         price: parsed.price,
         calories: parsed.calories ?? null,
         currency: parsed.currency,
+        prepMinutes: parsed.prepMinutes ?? null,
         spicyLevel: parsed.spicyLevel,
         mainImageUrl: imageUrl,
         isActive: parsed.isActive,
@@ -351,9 +353,10 @@ export async function updateSettingsAction(formData: FormData) {
   const user = await requireAdmin();
   const businessId = String(formData.get("businessId") || "default-business");
   const themeId = String(formData.get("themeId") || "default-theme");
-  const logoUrl = (await uploadedImageUrl(formData, "logo")) || String(formData.get("logoUrl") || "") || undefined;
+  const logoUrl = (await uploadedImageUrl(formData, "logo", user.id, { width: 512, height: 512 })) || String(formData.get("logoUrl") || "") || undefined;
   const coverImageUrl =
-    (await uploadedImageUrl(formData, "coverImage")) || String(formData.get("coverImageUrl") || "") || undefined;
+    (await uploadedImageUrl(formData, "coverImage", user.id, { width: 1600, height: 900 })) || String(formData.get("coverImageUrl") || "") || undefined;
+  const welcomeText = readOptionalLocalized(formData, "welcome");
 
   await prisma.$transaction([
     prisma.businessSetting.upsert({
@@ -367,6 +370,7 @@ export async function updateSettingsAction(formData: FormData) {
         email: String(formData.get("email") || "") || null,
         website: String(formData.get("website") || "") || null,
         defaultCurrency: String(formData.get("defaultCurrency") || "TRY"),
+        welcomeText,
         updatedBy: user.id
       },
       create: {
@@ -379,6 +383,7 @@ export async function updateSettingsAction(formData: FormData) {
         email: String(formData.get("email") || "") || null,
         website: String(formData.get("website") || "") || null,
         defaultCurrency: String(formData.get("defaultCurrency") || "TRY"),
+        welcomeText,
         createdBy: user.id
       }
     }),
@@ -427,6 +432,100 @@ export async function updateSortOrderAction(formData: FormData) {
   await logAndRevalidate(user.id, AuditAction.UPDATE, `${type}:sort`);
 }
 
+export async function createMediaCategoryAction(formData: FormData) {
+  const user = await requireAdmin();
+  const name = String(formData.get("name") || "").trim();
+  if (!name) throw new Error("Kategori adı gerekli.");
+  const category = await prisma.mediaCategory.create({
+    data: {
+      name,
+      slug: slugify(String(formData.get("slug") || name)),
+      description: String(formData.get("description") || "") || null,
+      sortOrder: Number(formData.get("sortOrder") || 0)
+    }
+  });
+  await logAndRevalidate(user.id, AuditAction.CREATE, "MediaCategory", category.id);
+}
+
+export async function updateMediaCategoryAction(formData: FormData) {
+  const user = await requireAdmin();
+  const id = requiredId(formData);
+  const name = String(formData.get("name") || "").trim();
+  if (!name) throw new Error("Kategori adı gerekli.");
+  await prisma.mediaCategory.update({
+    where: { id },
+    data: {
+      name,
+      slug: slugify(String(formData.get("slug") || name)),
+      description: String(formData.get("description") || "") || null,
+      sortOrder: Number(formData.get("sortOrder") || 0)
+    }
+  });
+  await logAndRevalidate(user.id, AuditAction.UPDATE, "MediaCategory", id);
+}
+
+export async function deleteMediaCategoryAction(formData: FormData) {
+  const user = await requireAdmin();
+  const id = requiredId(formData);
+  await prisma.$transaction([
+    prisma.media.updateMany({ where: { categoryId: id }, data: { deletedAt: new Date(), isActive: false, updatedBy: user.id } }),
+    prisma.mediaCategory.update({ where: { id }, data: { deletedAt: new Date() } })
+  ]);
+  await logAndRevalidate(user.id, AuditAction.DELETE, "MediaCategory", id);
+}
+
+export async function uploadMediaAction(formData: FormData) {
+  const user = await requireAdmin();
+  const files = formData.getAll("files").filter((file): file is File => file instanceof File && file.size > 0);
+  if (!files.length) throw new Error("Yüklenecek görsel bulunamadı.");
+
+  const categoryId = String(formData.get("categoryId") || "") || null;
+  const width = Number(formData.get("width") || 1600);
+  const heightValue = String(formData.get("height") || "");
+  const height = heightValue ? Number(heightValue) : undefined;
+
+  const created = [];
+  for (const file of files) {
+    const stored = await storeImage(file, {
+      width: Number.isFinite(width) ? width : 1600,
+      height: height && Number.isFinite(height) ? height : undefined
+    });
+    const media = await prisma.media.create({
+      data: {
+        kind: "IMAGE",
+        categoryId,
+        originalName: file.name,
+        fileName: stored.fileName,
+        mimeType: stored.mimeType,
+        size: stored.size,
+        width: stored.width,
+        height: stored.height,
+        url: stored.url,
+        createdBy: user.id
+      }
+    });
+    created.push(media.id);
+  }
+
+  await audit({
+    userId: user.id,
+    action: AuditAction.CREATE,
+    resourceType: "Media",
+    newValue: { count: created.length, mediaIds: created }
+  });
+  await setAdminFlash("success", `${created.length} görsel başarıyla yüklendi.`);
+  revalidatePath("/");
+}
+
+export async function moveMediaAction(formData: FormData) {
+  const user = await requireAdmin();
+  const ids = readMany(formData, "mediaIds");
+  const categoryId = String(formData.get("categoryId") || "") || null;
+  if (!ids.length) throw new Error("Taşınacak görsel seçin.");
+  await prisma.media.updateMany({ where: { id: { in: ids } }, data: { categoryId, updatedBy: user.id } });
+  await logAndRevalidate(user.id, AuditAction.UPDATE, "Media:move", ids.join(","));
+}
+
 function readMenuForm(formData: FormData) {
   const name = readLocalized(formData, "name");
   return {
@@ -462,6 +561,7 @@ function readProductForm(formData: FormData) {
     price: formData.get("price"),
     calories: String(formData.get("calories") || "") || null,
     currency: String(formData.get("currency") || "TRY"),
+    prepMinutes: String(formData.get("prepMinutes") || "") || null,
     spicyLevel: formData.get("spicyLevel") ?? 0,
     isActive: formData.get("isActive") === "on",
     isAvailable: formData.get("isAvailable") === "on",
@@ -478,6 +578,14 @@ function readLocalized(formData: FormData, prefix: string) {
   };
 }
 
+function readOptionalLocalized(formData: FormData, prefix: string) {
+  return {
+    tr: String(formData.get(`${prefix}_tr`) || ""),
+    en: String(formData.get(`${prefix}_en`) || ""),
+    es: String(formData.get(`${prefix}_es`) || "")
+  };
+}
+
 function readMany(formData: FormData, key: string) {
   return formData.getAll(key).map(String).filter(Boolean);
 }
@@ -488,10 +596,30 @@ function requiredId(formData: FormData) {
   return id;
 }
 
-async function uploadedImageUrl(formData: FormData, key: string) {
+async function uploadedImageUrl(
+  formData: FormData,
+  key: string,
+  userId?: string,
+  options: { width?: number; height?: number; categoryId?: string | null } = {}
+) {
   const file = formData.get(key);
   if (!(file instanceof File) || file.size === 0) return null;
-  return (await storeImage(file)).url;
+  const stored = await storeImage(file, options);
+  await prisma.media.create({
+    data: {
+      kind: "IMAGE",
+      categoryId: options.categoryId || null,
+      originalName: file.name,
+      fileName: stored.fileName,
+      mimeType: stored.mimeType,
+      size: stored.size,
+      width: stored.width,
+      height: stored.height,
+      url: stored.url,
+      createdBy: userId
+    }
+  });
+  return stored.url;
 }
 
 function categoryTranslations(parsed: {

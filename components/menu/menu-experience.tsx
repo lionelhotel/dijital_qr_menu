@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Search, X, Flame, Leaf, WheatOff, Star, BadgeCheck, ChevronLeft } from "lucide-react";
+import { Search, X, Flame, Leaf, WheatOff, Star, BadgeCheck, ChevronLeft, Clock } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { t } from "@/lib/i18n/dictionaries";
@@ -21,6 +21,7 @@ type Product = {
   currency: string;
   portion?: string | null;
   calories?: number | null;
+  prepMinutes?: number | null;
   spicyLevel: number;
   mainImageUrl?: string | null;
   isAvailable: boolean;
@@ -91,7 +92,11 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
-            LH
+            {business.logoUrl ? (
+              <Image src={business.logoUrl} alt={business.businessName} width={36} height={36} className="h-9 w-9 object-contain" />
+            ) : (
+              "LH"
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{business.businessName}</p>
@@ -279,6 +284,13 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
               {selected.ingredients ? <Detail title={t(locale, "ingredients")} value={selected.ingredients} /> : null}
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {selected.portion ? <Detail title={t(locale, "portion")} value={selected.portion} /> : null}
+                {selected.prepMinutes ? (
+                  <Detail
+                    title={t(locale, "prepTime")}
+                    value={`${selected.prepMinutes} ${t(locale, "minutesShort")}`}
+                    icon={<Clock className="h-4 w-4" />}
+                  />
+                ) : null}
                 {selected.calories ? (
                   <Detail title={t(locale, "calories")} value={formatNutrition(selected.calories, locale)} />
                 ) : null}
@@ -304,10 +316,10 @@ function MobileBadge({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md bg-accent/10 px-2 py-1 text-xs font-medium text-accent sm:hidden">{children}</span>;
 }
 
-function Detail({ title, value }: { title: string; value: string }) {
+function Detail({ title, value, icon }: { title: string; value: string; icon?: React.ReactNode }) {
   return (
     <div className="mt-5">
-      <h3 className="text-sm font-semibold">{title}</h3>
+      <h3 className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</h3>
       <p className="mt-1 text-sm leading-6 text-muted-foreground">{value}</p>
     </div>
   );

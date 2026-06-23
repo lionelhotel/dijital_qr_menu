@@ -33,7 +33,8 @@ export default async function SelectedMenuPage({
         businessName: data.menu.label ?? "Menu",
         venueName: data.business?.venueName ?? "Restaurant & Bar",
         logoUrl: data.business?.logoUrl,
-        coverImageUrl: data.menu.imageUrl ?? data.business?.coverImageUrl
+        coverImageUrl: data.menu.imageUrl ?? data.business?.coverImageUrl,
+        welcomeText: data.business?.welcomeText
       }}
       categories={data.categories.map((category) => ({
         id: category.id,

@@ -3,6 +3,7 @@ import { createCategoryAction, deleteCategoryAction, updateCategoryAction } from
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { MediaPickerField } from "@/components/admin/media-picker-field";
 import { SortableList } from "@/components/admin/sortable-list";
 import { LabeledField } from "@/components/forms/labeled-field";
 import { TranslatedInputField } from "@/components/forms/translated-input-field";
@@ -12,11 +13,15 @@ import { Input } from "@/components/ui/input";
 
 export default async function CategoriesPage() {
   await requireAdmin();
-  const categories = await prisma.category.findMany({
-    where: { deletedAt: null },
-    orderBy: [{ sortOrder: "asc" }],
-    include: { translations: true, parent: { include: { translations: true } } }
-  });
+  const [categories, media, mediaCategories] = await Promise.all([
+    prisma.category.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ sortOrder: "asc" }],
+      include: { translations: true, parent: { include: { translations: true } } }
+    }),
+    prisma.media.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 200 }),
+    prisma.mediaCategory.findMany({ where: { deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
+  ]);
 
   return (
     <AdminShell>
@@ -24,7 +29,7 @@ export default async function CategoriesPage() {
       <div className="mt-6 grid gap-6 xl:grid-cols-[420px_1fr]">
         <Card className="p-4">
           <h2 className="font-semibold">Kategori oluştur</h2>
-          <CategoryForm action={createCategoryAction} categories={categories} />
+          <CategoryForm action={createCategoryAction} categories={categories} media={media} mediaCategories={mediaCategories} />
         </Card>
         <div className="space-y-4">
           <Card className="p-4">
@@ -43,7 +48,7 @@ export default async function CategoriesPage() {
                 <div className="relative aspect-video overflow-hidden rounded-md bg-muted">
                   <Image src={category.imageUrl ?? "/placeholders/category.svg"} alt={category.slug} fill className="object-cover" />
                 </div>
-                <CategoryForm action={updateCategoryAction} category={category} categories={categories} />
+                <CategoryForm action={updateCategoryAction} category={category} categories={categories} media={media} mediaCategories={mediaCategories} />
                 <form action={deleteCategoryAction} className="lg:col-start-2">
                   <input type="hidden" name="id" value={category.id} />
                   <Button type="submit" variant="outline">Sil</Button>
@@ -70,11 +75,15 @@ type CategoryForForm = {
 function CategoryForm({
   action,
   category,
-  categories
+  categories,
+  media,
+  mediaCategories
 }: {
   action: (formData: FormData) => Promise<void>;
   category?: CategoryForForm;
   categories: CategoryForForm[];
+  media: { id: string; url: string; originalName: string; category: { name: string } | null }[];
+  mediaCategories: { id: string; name: string }[];
 }) {
   const tr = category?.translations.find((item) => item.locale === "tr");
   const en = category?.translations.find((item) => item.locale === "en");
@@ -102,9 +111,8 @@ function CategoryForm({
         </select>
       </LabeledField>
       <LabeledField label="URL slug"><Input name="slug" defaultValue={category?.slug} /></LabeledField>
-      <LabeledField label="Mevcut görsel URL"><Input name="imageUrl" defaultValue={category?.imageUrl ?? ""} /></LabeledField>
-      <LabeledField label="Yerel görsel yükle" hint="Önerilen: 1400x520 px veya daha büyük, en fazla 4 MB.">
-        <input name="image" type="file" accept="image/jpeg,image/png,image/webp" className="w-full text-sm" />
+      <LabeledField label="Mevcut görsel URL">
+        <MediaPickerField name="imageUrl" defaultValue={category?.imageUrl ?? ""} media={media} categories={mediaCategories} label="Kategori görseli seç" targetWidth={1400} targetHeight={520} />
       </LabeledField>
       <LabeledField label="Sıra"><Input name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 0} /></LabeledField>
       <label className="flex items-center gap-2 text-sm">
