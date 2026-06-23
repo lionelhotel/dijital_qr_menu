@@ -2,6 +2,7 @@ import { createDietaryTagAction, deleteDietaryTagAction, updateDietaryTagAction 
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { KeyIconFields } from "@/components/admin/key-icon-fields";
 import { LabeledField } from "@/components/forms/labeled-field";
 import { TranslatedInputField } from "@/components/forms/translated-input-field";
 import { Button } from "@/components/ui/button";
@@ -54,13 +55,8 @@ function TagForm({
   return (
     <form action={action} className="space-y-3">
       {item ? <input type="hidden" name="id" value={item.id} /> : null}
-      <LabeledField label="Sistem anahtarı">
-        <Input name="key" defaultValue={item?.key} />
-      </LabeledField>
-      <LabeledField label="İkon">
-        <Input name="icon" defaultValue={item?.icon ?? "•"} />
-      </LabeledField>
-      <LabeledField label="Türkçe ad">
+      <KeyIconFields sourceName="name_tr" defaultKey={item?.key} defaultIcon={item?.icon} type="diet" />
+      <LabeledField label="Diyet Etiketi">
         <Input name="name_tr" defaultValue={tr?.name} required />
       </LabeledField>
       <TranslatedInputField label="İngilizce ad" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />

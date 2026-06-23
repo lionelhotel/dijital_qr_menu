@@ -222,14 +222,20 @@ export async function calculateProductNutritionAction(formData: FormData) {
     await audit({ userId: user.id, action: AuditAction.UPDATE, resourceType: "ProductNutrition", resourceId: id, newValue: result });
     if (result.ok) {
       await setAdminFlash("success", `Kalori başarıyla hesaplandı: ${result.calories} kcal.`);
+      revalidatePath("/");
+      return { ok: true as const, calories: result.calories, note: result.note };
     } else {
       await setAdminFlash("error", `Kalori hesaplanamadı: ${result.reason}`);
+      revalidatePath("/");
+      return { ok: false as const, reason: result.reason };
     }
   } catch (error) {
     console.error("Nutrition calculation failed", error);
-    await setAdminFlash("error", `Kalori hesaplanamadı: ${errorMessage(error)}`);
+    const reason = errorMessage(error);
+    await setAdminFlash("error", `Kalori hesaplanamadı: ${reason}`);
+    revalidatePath("/");
+    return { ok: false as const, reason };
   }
-  revalidatePath("/");
 }
 
 export async function updateProductPriceAction(formData: FormData) {
@@ -251,11 +257,15 @@ export async function updateProductPriceAction(formData: FormData) {
       newValue: { price }
     });
     await setAdminFlash("success", "Ürün fiyatı başarıyla güncellendi.");
+    revalidatePath("/");
+    return { ok: true as const, price: price.toString() };
   } catch (error) {
     console.error("Product price update failed", error);
-    await setAdminFlash("error", `Fiyat güncellenemedi: ${errorMessage(error)}`);
+    const reason = errorMessage(error);
+    await setAdminFlash("error", `Fiyat güncellenemedi: ${reason}`);
+    revalidatePath("/");
+    return { ok: false as const, reason };
   }
-  revalidatePath("/");
 }
 
 export async function deleteProductAction(formData: FormData) {

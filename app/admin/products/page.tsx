@@ -9,7 +9,9 @@ import {
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { CalculateNutritionForm } from "@/components/admin/calculate-nutrition-form";
 import { NutritionEnergyField } from "@/components/admin/nutrition-energy-field";
+import { ProductPriceField } from "@/components/admin/product-price-field";
 import { QuickPriceForm } from "@/components/admin/quick-price-form";
 import { SortableList } from "@/components/admin/sortable-list";
 import { LabeledField } from "@/components/forms/labeled-field";
@@ -76,10 +78,7 @@ export default async function ProductsPage() {
                     <input type="hidden" name="id" value={product.id} />
                     <Button type="submit" variant="outline">Sil</Button>
                   </form>
-                  <form action={calculateProductNutritionAction}>
-                    <input type="hidden" name="id" value={product.id} />
-                    <Button type="submit" variant="outline">AI ile kalori hesapla</Button>
-                  </form>
+                  <CalculateNutritionForm productId={product.id} action={calculateProductNutritionAction} />
                 </div>
                 <ProductForm
                   action={updateProductAction}
@@ -155,9 +154,9 @@ function ProductForm({
       <LabeledField label="Türkçe içerik"><Input name="ingredients_tr" defaultValue={tr?.ingredients ?? ""} /></LabeledField>
       <TranslatedInputField label="İngilizce içerik" name="ingredients_en" sourceName="ingredients_tr" targetLocale="en" defaultValue={en?.ingredients ?? ""} />
       <TranslatedInputField label="İspanyolca içerik" name="ingredients_es" sourceName="ingredients_tr" targetLocale="es" defaultValue={es?.ingredients ?? ""} />
-      <LabeledField label="Fiyat"><Input name="price" type="number" step="0.01" defaultValue={product?.price?.toString()} required /></LabeledField>
+      <LabeledField label="Fiyat"><ProductPriceField productId={product?.id} defaultPrice={product?.price?.toString()} /></LabeledField>
       <LabeledField label="1 porsiyon kalori (kcal) ve enerji">
-        <NutritionEnergyField defaultCalories={product?.calories} />
+        <NutritionEnergyField productId={product?.id} defaultCalories={product?.calories} />
       </LabeledField>
       <LabeledField label="Para birimi"><Input name="currency" defaultValue={product?.currency ?? "TRY"} /></LabeledField>
       <LabeledField label="Acılık seviyesi"><Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} /></LabeledField>

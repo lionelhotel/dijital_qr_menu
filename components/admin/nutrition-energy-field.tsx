@@ -1,15 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 
-export function NutritionEnergyField({ defaultCalories }: { defaultCalories?: number | null }) {
+type CaloriesEvent = CustomEvent<{ productId: string; calories: string }>;
+
+export function NutritionEnergyField({
+  defaultCalories,
+  productId
+}: {
+  defaultCalories?: number | null;
+  productId?: string;
+}) {
   const [calories, setCalories] = useState(defaultCalories?.toString() ?? "");
   const energy = useMemo(() => {
     const value = Number(calories);
     if (!Number.isFinite(value) || value <= 0) return null;
     return Math.round(value * 4.184);
   }, [calories]);
+
+  useEffect(() => {
+    if (!productId) return;
+
+    function handleCalories(event: Event) {
+      const customEvent = event as CaloriesEvent;
+      if (customEvent.detail?.productId === productId) setCalories(customEvent.detail.calories);
+    }
+
+    window.addEventListener("admin-product-calories", handleCalories);
+    return () => window.removeEventListener("admin-product-calories", handleCalories);
+  }, [productId]);
 
   return (
     <div className="grid gap-2 sm:grid-cols-[1fr_160px]">
