@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Download, QrCode } from "lucide-react";
+import { LabeledField } from "@/components/forms/labeled-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,7 +20,9 @@ export function QrTool() {
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
       <div className="space-y-3">
-        <Input value={target} onChange={(event) => setTarget(event.target.value)} placeholder="Hedef URL" />
+        <LabeledField label="Hedef URL">
+          <Input value={target} onChange={(event) => setTarget(event.target.value)} />
+        </LabeledField>
         <Button type="button" onClick={generate}>
           <QrCode className="h-4 w-4" />
           QR üret

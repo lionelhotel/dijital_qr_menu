@@ -2,8 +2,10 @@ import Image from "next/image";
 import { createMenuAction, deleteMenuAction, updateMenuAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
+import { TranslateButton } from "@/components/admin/translate-button";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SortableList } from "@/components/admin/sortable-list";
+import { LabeledField } from "@/components/forms/labeled-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -79,20 +81,19 @@ function MenuForm({
   return (
     <form action={action} className="mt-4 space-y-3">
       {menu ? <input type="hidden" name="id" value={menu.id} /> : null}
-      <Input name="name_tr" placeholder="Türkçe menü adı" defaultValue={tr?.name} required />
-      <Input name="name_en" placeholder="İngilizce menü adı" defaultValue={en?.name} required />
-      <Input name="name_es" placeholder="İspanyolca menü adı" defaultValue={es?.name} required />
-      <Input name="description_tr" placeholder="Türkçe açıklama" defaultValue={tr?.description ?? ""} />
-      <Input name="description_en" placeholder="İngilizce açıklama" defaultValue={en?.description ?? ""} />
-      <Input name="description_es" placeholder="İspanyolca açıklama" defaultValue={es?.description ?? ""} />
-      <Input name="slug" placeholder="URL slug" defaultValue={menu?.slug} />
-      <Input name="imageUrl" placeholder="Mevcut görsel URL" defaultValue={menu?.imageUrl ?? ""} />
-      <label className="block text-sm">
-        <span className="mb-1 block font-medium">Yerel görsel yükle</span>
+      <TranslateButton />
+      <LabeledField label="Türkçe menü adı"><Input name="name_tr" defaultValue={tr?.name} required /></LabeledField>
+      <LabeledField label="İngilizce menü adı"><Input name="name_en" defaultValue={en?.name} required /></LabeledField>
+      <LabeledField label="İspanyolca menü adı"><Input name="name_es" defaultValue={es?.name} required /></LabeledField>
+      <LabeledField label="Türkçe açıklama"><Input name="description_tr" defaultValue={tr?.description ?? ""} /></LabeledField>
+      <LabeledField label="İngilizce açıklama"><Input name="description_en" defaultValue={en?.description ?? ""} /></LabeledField>
+      <LabeledField label="İspanyolca açıklama"><Input name="description_es" defaultValue={es?.description ?? ""} /></LabeledField>
+      <LabeledField label="URL slug"><Input name="slug" defaultValue={menu?.slug} /></LabeledField>
+      <LabeledField label="Mevcut görsel URL"><Input name="imageUrl" defaultValue={menu?.imageUrl ?? ""} /></LabeledField>
+      <LabeledField label="Yerel görsel yükle" hint="Önerilen: 1400x520 px veya daha büyük, en fazla 4 MB.">
         <input name="image" type="file" accept="image/jpeg,image/png,image/webp" className="w-full text-sm" />
-        <span className="mt-1 block text-xs text-muted-foreground">Önerilen: 1400x520 px veya daha büyük, en fazla 4 MB.</span>
-      </label>
-      <Input name="sortOrder" type="number" defaultValue={menu?.sortOrder ?? 0} />
+      </LabeledField>
+      <LabeledField label="Sıra"><Input name="sortOrder" type="number" defaultValue={menu?.sortOrder ?? 0} /></LabeledField>
       <label className="flex items-center gap-2 text-sm">
         <input name="isActive" type="checkbox" defaultChecked={menu?.isActive ?? true} />
         Aktif

@@ -1,7 +1,9 @@
 import { createAllergenAction, deleteAllergenAction, updateAllergenAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
+import { TranslateButton } from "@/components/admin/translate-button";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { LabeledField } from "@/components/forms/labeled-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,14 +54,31 @@ function AllergenForm({
   return (
     <form action={action} className="space-y-3">
       {item ? <input type="hidden" name="id" value={item.id} /> : null}
-      <Input name="key" placeholder="Anahtar" defaultValue={item?.key} />
-      <Input name="icon" placeholder="İkon" defaultValue={item?.icon ?? "•"} />
-      <Input name="name_tr" placeholder="Türkçe ad" defaultValue={tr?.name} required />
-      <Input name="name_en" placeholder="İngilizce ad" defaultValue={en?.name} required />
-      <Input name="name_es" placeholder="İspanyolca ad" defaultValue={es?.name} required />
-      <Input name="description_tr" placeholder="Türkçe açıklama" defaultValue={tr?.description ?? ""} />
-      <Input name="description_en" placeholder="İngilizce açıklama" defaultValue={en?.description ?? ""} />
-      <Input name="description_es" placeholder="İspanyolca açıklama" defaultValue={es?.description ?? ""} />
+      <TranslateButton />
+      <LabeledField label="Sistem anahtarı">
+        <Input name="key" defaultValue={item?.key} />
+      </LabeledField>
+      <LabeledField label="İkon">
+        <Input name="icon" defaultValue={item?.icon ?? "•"} />
+      </LabeledField>
+      <LabeledField label="Türkçe ad">
+        <Input name="name_tr" defaultValue={tr?.name} required />
+      </LabeledField>
+      <LabeledField label="İngilizce ad">
+        <Input name="name_en" defaultValue={en?.name} required />
+      </LabeledField>
+      <LabeledField label="İspanyolca ad">
+        <Input name="name_es" defaultValue={es?.name} required />
+      </LabeledField>
+      <LabeledField label="Türkçe açıklama">
+        <Input name="description_tr" defaultValue={tr?.description ?? ""} />
+      </LabeledField>
+      <LabeledField label="İngilizce açıklama">
+        <Input name="description_en" defaultValue={en?.description ?? ""} />
+      </LabeledField>
+      <LabeledField label="İspanyolca açıklama">
+        <Input name="description_es" defaultValue={es?.description ?? ""} />
+      </LabeledField>
       <label className="flex items-center gap-2 text-sm">
         <input name="isActive" type="checkbox" defaultChecked={item?.isActive ?? true} />
         Aktif

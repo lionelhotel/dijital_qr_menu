@@ -280,7 +280,7 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {selected.portion ? <Detail title={t(locale, "portion")} value={selected.portion} /> : null}
                 {selected.calories ? (
-                  <Detail title={t(locale, "calories")} value={formatNutrition(selected.calories)} />
+                  <Detail title={t(locale, "calories")} value={formatNutrition(selected.calories, locale)} />
                 ) : null}
               </div>
               <TagList title={t(locale, "allergens")} values={selected.allergens.map((item) => item.name ?? item.key)} />
@@ -313,9 +313,9 @@ function Detail({ title, value }: { title: string; value: string }) {
   );
 }
 
-function formatNutrition(calories: number) {
+function formatNutrition(calories: number, locale: Locale) {
   const kilojoules = Math.round(calories * 4.184);
-  return `${calories} kcal / ${kilojoules} kJ (1 porsiyon)`;
+  return `${calories} kcal / ${kilojoules} kJ. ${t(locale, "nutritionAverageNote")}`;
 }
 
 function TagList({ title, values }: { title: string; values: string[] }) {

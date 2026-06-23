@@ -8,8 +8,10 @@ import {
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { formatPrice } from "@/lib/utils";
+import { TranslateButton } from "@/components/admin/translate-button";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { SortableList } from "@/components/admin/sortable-list";
+import { LabeledField } from "@/components/forms/labeled-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,39 +54,36 @@ export default async function ProductsPage() {
             />
           </Card>
           {products.map((product) => (
-            <Card key={product.id} className="p-4">
-              <div className="grid gap-4 lg:grid-cols-[180px_1fr]">
-                <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
+            <details key={product.id} className="group rounded-lg border border-border bg-card shadow-soft">
+              <summary className="flex cursor-pointer list-none items-center gap-4 p-3 marker:hidden">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                   <Image src={product.mainImageUrl ?? "/placeholders/food.svg"} alt={product.id} fill className="object-cover" />
                 </div>
-                <div>
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <h2 className="font-semibold">{product.translations.find((item) => item.locale === "tr")?.name}</h2>
-                      <p className="text-sm text-muted-foreground">
-                        {product.category.translations.find((item) => item.locale === "tr")?.name} ·{" "}
-                        {formatPrice(product.price.toString(), product.currency)}
-                      </p>
-                    </div>
-                    <form action={deleteProductAction}>
-                      <input type="hidden" name="id" value={product.id} />
-                      <Button type="submit" variant="outline">Sil</Button>
-                    </form>
-                    <form action={calculateProductNutritionAction}>
-                      <input type="hidden" name="id" value={product.id} />
-                      <Button type="submit" variant="outline">AI ile kalori hesapla</Button>
-                    </form>
-                  </div>
-                  <ProductForm
-                    action={updateProductAction}
-                    product={product}
-                    categories={categories}
-                    menus={menus}
-                    allergens={allergens}
-                  />
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate font-semibold">{product.translations.find((item) => item.locale === "tr")?.name}</h2>
                 </div>
+                <p className="shrink-0 font-semibold text-accent">{formatPrice(product.price.toString(), product.currency)}</p>
+              </summary>
+              <div className="border-t border-border p-4">
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <form action={deleteProductAction}>
+                    <input type="hidden" name="id" value={product.id} />
+                    <Button type="submit" variant="outline">Sil</Button>
+                  </form>
+                  <form action={calculateProductNutritionAction}>
+                    <input type="hidden" name="id" value={product.id} />
+                    <Button type="submit" variant="outline">AI ile kalori hesapla</Button>
+                  </form>
+                </div>
+                <ProductForm
+                  action={updateProductAction}
+                  product={product}
+                  categories={categories}
+                  menus={menus}
+                  allergens={allergens}
+                />
               </div>
-            </Card>
+            </details>
           ))}
         </div>
       </div>
@@ -131,33 +130,34 @@ function ProductForm({
   return (
     <form action={action} className="mt-4 space-y-3">
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
-      <select name="categoryId" defaultValue={product?.categoryId ?? ""} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm" required>
-        <option value="">Kategori seç</option>
-        {categories.map((category) => (
-          <option key={category.id} value={category.id}>
-            {category.translations.find((item) => item.locale === "tr")?.name}
-          </option>
-        ))}
-      </select>
-      <Input name="name_tr" placeholder="Türkçe ürün adı" defaultValue={tr?.name} required />
-      <Input name="name_en" placeholder="İngilizce ürün adı" defaultValue={en?.name} required />
-      <Input name="name_es" placeholder="İspanyolca ürün adı" defaultValue={es?.name} required />
-      <Input name="short_tr" placeholder="Türkçe kısa açıklama" defaultValue={tr?.shortDescription ?? ""} required />
-      <Input name="short_en" placeholder="İngilizce kısa açıklama" defaultValue={en?.shortDescription ?? ""} required />
-      <Input name="short_es" placeholder="İspanyolca kısa açıklama" defaultValue={es?.shortDescription ?? ""} required />
-      <Input name="ingredients_tr" placeholder="Türkçe içerik" defaultValue={tr?.ingredients ?? ""} />
-      <Input name="ingredients_en" placeholder="İngilizce içerik" defaultValue={en?.ingredients ?? ""} />
-      <Input name="ingredients_es" placeholder="İspanyolca içerik" defaultValue={es?.ingredients ?? ""} />
-      <Input name="price" type="number" step="0.01" placeholder="Fiyat" defaultValue={product?.price?.toString()} required />
-      <Input name="calories" type="number" min={0} placeholder="1 porsiyon kalori (kcal)" defaultValue={product?.calories ?? ""} />
-      <Input name="currency" placeholder="Para birimi" defaultValue={product?.currency ?? "TRY"} />
-      <Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} />
-      <Input name="imageUrl" placeholder="Mevcut görsel URL" defaultValue={product?.mainImageUrl ?? ""} />
-      <label className="block text-sm">
-        <span className="mb-1 block font-medium">Yerel ürün görseli</span>
+      <TranslateButton />
+      <LabeledField label="Kategori">
+        <select name="categoryId" defaultValue={product?.categoryId ?? ""} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm" required>
+          <option value="">Kategori seç</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.translations.find((item) => item.locale === "tr")?.name}
+            </option>
+          ))}
+        </select>
+      </LabeledField>
+      <LabeledField label="Türkçe ürün adı"><Input name="name_tr" defaultValue={tr?.name} required /></LabeledField>
+      <LabeledField label="İngilizce ürün adı"><Input name="name_en" defaultValue={en?.name} required /></LabeledField>
+      <LabeledField label="İspanyolca ürün adı"><Input name="name_es" defaultValue={es?.name} required /></LabeledField>
+      <LabeledField label="Türkçe kısa açıklama"><Input name="short_tr" defaultValue={tr?.shortDescription ?? ""} required /></LabeledField>
+      <LabeledField label="İngilizce kısa açıklama"><Input name="short_en" defaultValue={en?.shortDescription ?? ""} required /></LabeledField>
+      <LabeledField label="İspanyolca kısa açıklama"><Input name="short_es" defaultValue={es?.shortDescription ?? ""} required /></LabeledField>
+      <LabeledField label="Türkçe içerik"><Input name="ingredients_tr" defaultValue={tr?.ingredients ?? ""} /></LabeledField>
+      <LabeledField label="İngilizce içerik"><Input name="ingredients_en" defaultValue={en?.ingredients ?? ""} /></LabeledField>
+      <LabeledField label="İspanyolca içerik"><Input name="ingredients_es" defaultValue={es?.ingredients ?? ""} /></LabeledField>
+      <LabeledField label="Fiyat"><Input name="price" type="number" step="0.01" defaultValue={product?.price?.toString()} required /></LabeledField>
+      <LabeledField label="1 porsiyon kalori (kcal)"><Input name="calories" type="number" min={0} defaultValue={product?.calories ?? ""} /></LabeledField>
+      <LabeledField label="Para birimi"><Input name="currency" defaultValue={product?.currency ?? "TRY"} /></LabeledField>
+      <LabeledField label="Acılık seviyesi"><Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} /></LabeledField>
+      <LabeledField label="Mevcut görsel URL"><Input name="imageUrl" defaultValue={product?.mainImageUrl ?? ""} /></LabeledField>
+      <LabeledField label="Yerel ürün görseli" hint="Önerilen: 1200x900 px veya daha büyük, en fazla 4 MB.">
         <input name="image" type="file" accept="image/jpeg,image/png,image/webp" className="w-full text-sm" />
-        <span className="mt-1 block text-xs text-muted-foreground">Önerilen: 1200x900 px veya daha büyük, en fazla 4 MB.</span>
-      </label>
+      </LabeledField>
       <fieldset className="rounded-md border border-border p-3">
         <legend className="px-1 text-sm font-medium">Bu ürün hangi menülerde görünsün?</legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
