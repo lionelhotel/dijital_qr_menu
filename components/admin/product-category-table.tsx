@@ -51,6 +51,7 @@ export function ProductCategoryTable({
 }) {
   const [orderedGroups, setOrderedGroups] = useState(groups);
   const [dragged, setDragged] = useState<{ categoryId: string; productId: string } | null>(null);
+  const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null);
   const [viewProduct, setViewProduct] = useState<ProductTableRow | null>(null);
   const [editProduct, setEditProduct] = useState<ProductTableRow | null>(null);
   const [pending, startTransition] = useTransition();
@@ -86,13 +87,54 @@ export function ProductCategoryTable({
     });
   }
 
+  function moveCategory(targetCategoryId: string) {
+    if (!draggedCategoryId || draggedCategoryId === targetCategoryId) return;
+    setOrderedGroups((current) => {
+      const next = [...current];
+      const from = next.findIndex((group) => group.id === draggedCategoryId);
+      const to = next.findIndex((group) => group.id === targetCategoryId);
+      if (from < 0 || to < 0) return current;
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+  }
+
+  function saveCategoryGroupOrder() {
+    const formData = new FormData();
+    formData.set("type", "category");
+    formData.set("ids", orderedGroups.map((group) => group.id).join(","));
+    startTransition(() => {
+      void updateSortOrderAction(formData);
+    });
+  }
+
   return (
     <>
       <div className="space-y-3">
         {orderedGroups.map((group) => (
-          <details key={group.id} className="rounded-lg border border-border bg-card shadow-soft">
-            <summary className="cursor-pointer list-none p-4 font-semibold marker:hidden">
-              {group.name}
+          <details
+            key={group.id}
+            draggable
+            onDragStart={() => setDraggedCategoryId(group.id)}
+            onDragOver={(event) => {
+              event.preventDefault();
+              moveCategory(group.id);
+            }}
+            onDragEnd={() => {
+              saveCategoryGroupOrder();
+              setDraggedCategoryId(null);
+            }}
+            className="rounded-lg border border-border bg-card shadow-soft"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 font-semibold marker:hidden">
+              <span className="flex min-w-0 items-center gap-3">
+                <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" />
+                <span className="truncate">{group.name}</span>
+              </span>
+              <span className="shrink-0 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                {group.products.length} ürün
+              </span>
             </summary>
             <div className="border-t border-border p-3">
               {group.products.length ? (
