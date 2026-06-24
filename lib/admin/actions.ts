@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit/audit";
 import { errorMessage } from "@/lib/admin/error-message";
+import { importProductsXlsx } from "@/lib/admin/product-excel";
 import { setAdminFlash } from "@/lib/admin/flash";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
@@ -275,6 +276,31 @@ export async function deleteProductAction(formData: FormData) {
   const id = requiredId(formData);
   await prisma.product.update({ where: { id }, data: { deletedAt: new Date(), isActive: false, updatedBy: user.id } });
   await logAndRevalidate(user.id, AuditAction.DELETE, "Product", id);
+}
+
+export async function importProductsExcelAction(formData: FormData) {
+  const user = await requireAdmin();
+  try {
+    const file = formData.get("file");
+    if (!(file instanceof File)) throw new Error("Excel dosyası seçin.");
+    const result = await importProductsXlsx(file, user.id);
+    await audit({
+      userId: user.id,
+      action: AuditAction.CREATE,
+      resourceType: "Product:excel-import",
+      newValue: result
+    });
+    const errorText = result.errors.length ? ` Atlanan satırlar: ${result.errors.slice(0, 3).join(" | ")}` : "";
+    await setAdminFlash(
+      result.skipped ? "info" : "success",
+      `Excel import tamamlandı. Yeni: ${result.created}, Güncellenen: ${result.updated}, Atlanan: ${result.skipped}.${errorText}`
+    );
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Product Excel import failed", error);
+    await setAdminFlash("error", `Excel import başarısız: ${errorMessage(error)}`);
+    revalidatePath("/");
+  }
 }
 
 export async function createAllergenAction(formData: FormData) {

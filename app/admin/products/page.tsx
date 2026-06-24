@@ -1,5 +1,5 @@
-import { Search } from "lucide-react";
-import { createProductAction } from "@/lib/admin/actions";
+import { Download, Search, Upload } from "lucide-react";
+import { createProductAction, importProductsExcelAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -93,6 +93,35 @@ export default async function ProductsPage({
             mediaCategories={mediaCategories}
             variant="create"
           />
+        </Card>
+
+        <Card className="p-4">
+          <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+            <div>
+              <h2 className="text-xl font-semibold">Excel import / export</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Mevcut ürünleri aynı formatta dışarı aktarın veya düzenlediğiniz Excel dosyasını içeri alın.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-[auto_1fr]">
+              <form action="/api/admin/products/export" method="get">
+                <Button type="submit" variant="outline" className="w-full">
+                  <Download className="h-4 w-4" />
+                  Excel export
+                </Button>
+              </form>
+              <form action={importProductsExcelAction} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <label className="block">
+                  <span className="sr-only">Excel dosyası seç</span>
+                  <Input name="file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
+                </label>
+                <Button type="submit">
+                  <Upload className="h-4 w-4" />
+                  Excel import
+                </Button>
+              </form>
+            </div>
+          </div>
         </Card>
 
         <Card className="p-4">
