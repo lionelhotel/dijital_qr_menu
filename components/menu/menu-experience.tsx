@@ -231,7 +231,7 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
                 {product.spicyLevel > 0 ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
                     <Flame className="h-3 w-3 text-destructive" />
-                    {product.spicyLevel}/5
+                    {spicyText(locale)}
                   </span>
                 ) : null}
                 {product.dietaryTags.slice(0, 3).map((tag) => (
@@ -294,6 +294,13 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
                 {selected.calories ? (
                   <Detail title={t(locale, "calories")} value={formatNutrition(selected.calories, locale)} />
                 ) : null}
+                {selected.spicyLevel > 0 ? (
+                  <Detail
+                    title={spicyText(locale)}
+                    value={spicyText(locale)}
+                    icon={<Flame className="h-4 w-4 text-destructive" />}
+                  />
+                ) : null}
               </div>
               <TagList title={t(locale, "allergens")} values={selected.allergens.map((item) => item.name ?? item.key)} />
               <TagList title={t(locale, "dietary")} values={selected.dietaryTags.map((item) => item.name ?? item.key)} />
@@ -328,6 +335,12 @@ function Detail({ title, value, icon }: { title: string; value: string; icon?: R
 function formatNutrition(calories: number, locale: Locale) {
   const kilojoules = Math.round(calories * 4.184);
   return `${calories} kcal / ${kilojoules} kJ. ${t(locale, "nutritionAverageNote")}`;
+}
+
+function spicyText(locale: Locale) {
+  if (locale === "en") return "Spicy";
+  if (locale === "es") return "Picante";
+  return "Acılı";
 }
 
 function TagList({ title, values }: { title: string; values: string[] }) {

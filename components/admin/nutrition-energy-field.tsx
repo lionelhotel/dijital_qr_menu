@@ -7,10 +7,12 @@ type CaloriesEvent = CustomEvent<{ productId: string; calories: string }>;
 
 export function NutritionEnergyField({
   defaultCalories,
-  productId
+  productId,
+  compact = false
 }: {
   defaultCalories?: number | null;
   productId?: string;
+  compact?: boolean;
 }) {
   const [calories, setCalories] = useState(defaultCalories?.toString() ?? "");
   const energy = useMemo(() => {
@@ -32,16 +34,17 @@ export function NutritionEnergyField({
   }, [productId]);
 
   return (
-    <div className="grid gap-2 sm:grid-cols-[1fr_160px]">
+    <div className={compact ? "grid gap-2 sm:grid-cols-[7rem_8rem]" : "grid gap-2 sm:grid-cols-[1fr_160px]"}>
       <Input
         name="calories"
         type="number"
         min={0}
         value={calories}
         onChange={(event) => setCalories(event.target.value)}
+        className={compact ? "max-w-28" : undefined}
       />
-      <div className="flex h-10 items-center rounded-md border border-border bg-muted px-3 text-sm text-muted-foreground">
-        {energy ? `${energy} kJ enerji` : "Enerji hesaplanmadı"}
+      <div className="flex h-10 items-center truncate rounded-md border border-border bg-muted px-3 text-sm text-muted-foreground">
+        {energy ? `${energy} kJ enerji` : "Enerji yok"}
       </div>
     </div>
   );

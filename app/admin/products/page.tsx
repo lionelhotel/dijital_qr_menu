@@ -1,23 +1,10 @@
-import Image from "next/image";
 import { Search } from "lucide-react";
-import {
-  calculateProductNutritionAction,
-  createProductAction,
-  deleteProductAction,
-  updateProductAction,
-  updateProductPriceAction
-} from "@/lib/admin/actions";
+import { createProductAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { CalculateNutritionForm } from "@/components/admin/calculate-nutrition-form";
-import { MediaPickerField } from "@/components/admin/media-picker-field";
-import { NutritionEnergyField } from "@/components/admin/nutrition-energy-field";
-import { ProductPriceField } from "@/components/admin/product-price-field";
-import { QuickPriceForm } from "@/components/admin/quick-price-form";
-import { SortableList } from "@/components/admin/sortable-list";
-import { LabeledField } from "@/components/forms/labeled-field";
-import { TranslatedInputField } from "@/components/forms/translated-input-field";
+import { ProductCategoryTable, type ProductCategoryGroup, type ProductTableRow } from "@/components/admin/product-category-table";
+import { ProductForm } from "@/components/admin/product-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,7 +32,7 @@ export default async function ProductsPage({
       : {})
   };
 
-  const [categories, products, productsForSorting, menus, allergens, media, mediaCategories] = await Promise.all([
+  const [categories, products, menus, allergens, media, mediaCategories] = await Promise.all([
     prisma.category.findMany({ where: { deletedAt: null }, orderBy: { sortOrder: "asc" }, include: { translations: true } }),
     prisma.product.findMany({
       where: productWhere,
@@ -57,50 +44,56 @@ export default async function ProductsPage({
         allergens: true
       }
     }),
-    prisma.product.findMany({
-      where: { deletedAt: null },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-      include: { translations: true }
-    }),
     prisma.menu.findMany({ where: { deletedAt: null }, orderBy: { sortOrder: "asc" }, include: { translations: true } }),
     prisma.allergen.findMany({ where: { deletedAt: null }, orderBy: { key: "asc" }, include: { translations: true } }),
     prisma.media.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 200 }),
     prisma.mediaCategory.findMany({ where: { deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
   ]);
 
+  const rows: ProductTableRow[] = products.map((product) => ({
+    id: product.id,
+    categoryId: product.categoryId,
+    categoryName: product.category.translations.find((item) => item.locale === "tr")?.name ?? product.categoryId,
+    price: product.price.toString(),
+    calories: product.calories,
+    currency: product.currency,
+    prepMinutes: product.prepMinutes,
+    spicyLevel: product.spicyLevel,
+    mainImageUrl: product.mainImageUrl,
+    isActive: product.isActive,
+    isAvailable: product.isAvailable,
+    isFeatured: product.isFeatured,
+    isNew: product.isNew,
+    translations: product.translations,
+    menus: product.menus.map((item) => ({ menuId: item.menuId })),
+    allergens: product.allergens.map((item) => ({ allergenId: item.allergenId }))
+  }));
+
+  const groups: ProductCategoryGroup[] = categories
+    .map((category) => ({
+      id: category.id,
+      name: category.translations.find((item) => item.locale === "tr")?.name ?? category.id,
+      products: rows.filter((product) => product.categoryId === category.id)
+    }))
+    .filter((group) => group.products.length > 0 || group.id === categoryId);
+
   return (
     <AdminShell>
       <h1 className="font-serif text-3xl">Ürünler</h1>
       <div className="mt-6 space-y-6">
-        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_420px]">
-          <Card className="p-4">
-            <h2 className="text-xl font-semibold">Ürün oluştur</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Temel bilgiler yatay alanda, menü ve alerjen seçimleri formun sonunda yer alır.</p>
-            <ProductForm
-              action={createProductAction}
-              categories={categories}
-              menus={menus}
-              allergens={allergens}
-              media={media}
-              mediaCategories={mediaCategories}
-              variant="create"
-            />
-          </Card>
-
-          <Card className="self-start p-4">
-            <h2 className="font-semibold">Ürün sıralama</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Sürükle bırak ile ürün sırasını belirleyin.</p>
-            <div className="mt-4">
-              <SortableList
-                type="product"
-                items={productsForSorting.map((product) => ({
-                  id: product.id,
-                  label: product.translations.find((item) => item.locale === "tr")?.name ?? product.id
-                }))}
-              />
-            </div>
-          </Card>
-        </div>
+        <Card className="p-4">
+          <h2 className="text-xl font-semibold">Ürün oluştur</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Temel bilgiler yatay alanda, menü ve alerjen seçimleri formun sonunda yer alır.</p>
+          <ProductForm
+            action={createProductAction}
+            categories={categories}
+            menus={menus}
+            allergens={allergens}
+            media={media}
+            mediaCategories={mediaCategories}
+            variant="create"
+          />
+        </Card>
 
         <Card className="p-4">
           <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_260px_auto]">
@@ -124,229 +117,19 @@ export default async function ProductsPage({
           </form>
         </Card>
 
-        {products.length > 0 ? (
-          <div className="grid gap-3 xl:grid-cols-2">
-            {products.map((product) => {
-              const productName = product.translations.find((item) => item.locale === "tr")?.name ?? product.id;
-              const categoryName = product.category.translations.find((item) => item.locale === "tr")?.name;
-
-              return (
-                <details key={product.id} className="group rounded-lg border border-border bg-card shadow-soft">
-                  <summary className="flex cursor-pointer list-none items-center gap-4 p-3 marker:hidden">
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
-                      <Image src={product.mainImageUrl ?? "/placeholders/food.svg"} alt={productName} fill className="object-cover" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h2 className="truncate font-semibold">{productName}</h2>
-                      {categoryName ? <p className="mt-1 truncate text-xs text-muted-foreground">{categoryName}</p> : null}
-                    </div>
-                    <QuickPriceForm productId={product.id} price={product.price.toString()} action={updateProductPriceAction} />
-                  </summary>
-                  <div className="border-t border-border p-4">
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      <form action={deleteProductAction}>
-                        <input type="hidden" name="id" value={product.id} />
-                        <Button type="submit" variant="outline">Sil</Button>
-                      </form>
-                      <CalculateNutritionForm productId={product.id} action={calculateProductNutritionAction} />
-                    </div>
-                    <ProductForm
-                      action={updateProductAction}
-                      product={product}
-                      categories={categories}
-                      menus={menus}
-                      allergens={allergens}
-                      media={media}
-                      mediaCategories={mediaCategories}
-                    />
-                  </div>
-                </details>
-              );
-            })}
-          </div>
+        {groups.length > 0 ? (
+          <ProductCategoryTable
+            groups={groups}
+            categories={categories}
+            menus={menus}
+            allergens={allergens}
+            media={media}
+            mediaCategories={mediaCategories}
+          />
         ) : (
           <Card className="p-6 text-sm text-muted-foreground">Bu arama ve kategori filtresine uygun ürün bulunamadı.</Card>
         )}
       </div>
     </AdminShell>
-  );
-}
-
-type Translation = { locale: string; name: string; shortDescription?: string | null; ingredients?: string | null };
-type MediaItem = { id: string; url: string; originalName: string; category: { name: string } | null };
-type MediaCategory = { id: string; name: string };
-
-function ProductForm({
-  action,
-  product,
-  categories,
-  menus,
-  allergens,
-  media,
-  mediaCategories,
-  variant = "edit"
-}: {
-  action: (formData: FormData) => Promise<void>;
-  product?: {
-    id: string;
-    categoryId: string;
-    price: unknown;
-    calories: number | null;
-    currency: string;
-    prepMinutes: number | null;
-    spicyLevel: number;
-    mainImageUrl: string | null;
-    isActive: boolean;
-    isAvailable: boolean;
-    isFeatured: boolean;
-    isNew: boolean;
-    translations: Translation[];
-    menus: { menuId: string }[];
-    allergens: { allergenId: string }[];
-  };
-  categories: { id: string; translations: { locale: string; name: string }[] }[];
-  menus: { id: string; translations: { locale: string; name: string }[] }[];
-  allergens: { id: string; key: string; translations: { locale: string; name: string }[] }[];
-  media: MediaItem[];
-  mediaCategories: MediaCategory[];
-  variant?: "create" | "edit";
-}) {
-  const tr = product?.translations.find((item) => item.locale === "tr");
-  const en = product?.translations.find((item) => item.locale === "en");
-  const es = product?.translations.find((item) => item.locale === "es");
-  const selectedMenus = new Set(product?.menus.map((item) => item.menuId));
-  const selectedAllergens = new Set(product?.allergens.map((item) => item.allergenId));
-  const isCreate = variant === "create";
-  const sectionSpacing = isCreate ? "mt-4 space-y-1" : "mt-4 space-y-3";
-
-  return (
-    <form action={action} className={sectionSpacing}>
-      {product ? <input type="hidden" name="id" value={product.id} /> : null}
-
-      <ProductFormSection number={1} title="Temel bilgiler">
-        <div className="mb-3 max-w-sm">
-          <LabeledField label="Kategori">
-            <select name="categoryId" defaultValue={product?.categoryId ?? ""} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm" required>
-              <option value="">Kategori seç</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.translations.find((item) => item.locale === "tr")?.name}
-                </option>
-              ))}
-            </select>
-          </LabeledField>
-        </div>
-        <div className="grid gap-3 xl:grid-cols-3">
-          <FieldGroup title="Ürün adı">
-            <LabeledField label="Türkçe ürün adı"><Input name="name_tr" defaultValue={tr?.name} required /></LabeledField>
-            <TranslatedInputField label="İngilizce ürün adı" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
-            <TranslatedInputField label="İspanyolca ürün adı" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
-          </FieldGroup>
-          <FieldGroup title="Kısa açıklama">
-            <LabeledField label="Türkçe kısa açıklama"><Input name="short_tr" defaultValue={tr?.shortDescription ?? ""} required /></LabeledField>
-            <TranslatedInputField label="İngilizce kısa açıklama" name="short_en" sourceName="short_tr" targetLocale="en" defaultValue={en?.shortDescription ?? ""} required />
-            <TranslatedInputField label="İspanyolca kısa açıklama" name="short_es" sourceName="short_tr" targetLocale="es" defaultValue={es?.shortDescription ?? ""} required />
-          </FieldGroup>
-          <FieldGroup title="İçerik">
-            <LabeledField label="Türkçe içerik"><Input name="ingredients_tr" defaultValue={tr?.ingredients ?? ""} /></LabeledField>
-            <TranslatedInputField label="İngilizce içerik" name="ingredients_en" sourceName="ingredients_tr" targetLocale="en" defaultValue={en?.ingredients ?? ""} />
-            <TranslatedInputField label="İspanyolca içerik" name="ingredients_es" sourceName="ingredients_tr" targetLocale="es" defaultValue={es?.ingredients ?? ""} />
-          </FieldGroup>
-        </div>
-      </ProductFormSection>
-
-      <ProductFormSection number={2} title="Fiyatlandırma ve ürün detayları">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_160px_1.8fr_1fr_1fr]">
-          <LabeledField label="Fiyat"><ProductPriceField productId={product?.id} defaultPrice={product?.price?.toString()} /></LabeledField>
-          <LabeledField label="Para birimi"><Input name="currency" defaultValue={product?.currency ?? "TRY"} /></LabeledField>
-          <LabeledField label="1 porsiyon kalori (kcal) ve enerji">
-            <NutritionEnergyField productId={product?.id} defaultCalories={product?.calories} />
-          </LabeledField>
-          <LabeledField label="Hazırlanma süresi (dk)"><Input name="prepMinutes" type="number" min={0} defaultValue={product?.prepMinutes ?? ""} /></LabeledField>
-          <LabeledField label="Acılık seviyesi"><Input name="spicyLevel" type="number" min={0} max={5} defaultValue={product?.spicyLevel ?? 0} /></LabeledField>
-        </div>
-      </ProductFormSection>
-
-      <ProductFormSection number={3} title="Ürün görseli">
-        <MediaPickerField
-          name="imageUrl"
-          defaultValue={product?.mainImageUrl ?? ""}
-          media={media}
-          categories={mediaCategories}
-          label="Ürün görseli seç"
-          targetWidth={1200}
-          targetHeight={900}
-        />
-      </ProductFormSection>
-
-      <ProductFormSection number={4} title="Menü görünürlüğü">
-        <fieldset>
-          <legend className="text-sm font-medium">Bu ürün hangi menülerde görünsün?</legend>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {menus.map((menu) => (
-              <label key={menu.id} className="flex items-center gap-2 text-sm">
-                <input name="menuIds" value={menu.id} type="checkbox" defaultChecked={selectedMenus.has(menu.id)} />
-                {menu.translations.find((item) => item.locale === "tr")?.name}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      </ProductFormSection>
-
-      <ProductFormSection number={5} title="Manuel alerjenler">
-        <fieldset>
-          <legend className="text-xs text-muted-foreground">İçerik metninden otomatik alerjen algılanır; burada ek manuel seçim de yapabilirsiniz.</legend>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {allergens.map((allergen) => (
-              <label key={allergen.id} className="flex items-center gap-2 text-sm">
-                <input name="allergenIds" value={allergen.id} type="checkbox" defaultChecked={selectedAllergens.has(allergen.id)} />
-                {allergen.translations.find((item) => item.locale === "tr")?.name ?? allergen.key}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      </ProductFormSection>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
-        <div className="grid flex-1 grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-          <label className="flex items-center gap-2"><input name="isActive" type="checkbox" defaultChecked={product?.isActive ?? true} /> Aktif</label>
-          <label className="flex items-center gap-2"><input name="isAvailable" type="checkbox" defaultChecked={product?.isAvailable ?? true} /> Mevcut</label>
-          <label className="flex items-center gap-2"><input name="isFeatured" type="checkbox" defaultChecked={product?.isFeatured ?? false} /> Öne çıkan</label>
-          <label className="flex items-center gap-2"><input name="isNew" type="checkbox" defaultChecked={product?.isNew ?? false} /> Yeni</label>
-        </div>
-        <Button type="submit" className="min-w-28">Kaydet</Button>
-      </div>
-    </form>
-  );
-}
-
-function ProductFormSection({
-  number,
-  title,
-  children
-}: {
-  number: number;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-lg border border-border p-3">
-      <div className="mb-3 flex items-center gap-3">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold">
-          {number}
-        </span>
-        <h3 className="font-semibold">{title}</h3>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-3 rounded-lg border border-border p-3">
-      <h4 className="font-semibold">{title}</h4>
-      {children}
-    </div>
   );
 }
