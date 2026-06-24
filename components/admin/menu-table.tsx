@@ -29,10 +29,12 @@ export function MenuTable({
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [viewMenu, setViewMenu] = useState<MenuTableRow | null>(null);
   const [editMenu, setEditMenu] = useState<MenuTableRow | null>(null);
+  const [savedOrder, setSavedOrder] = useState(() => menus.map((menu) => menu.id).join(","));
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     setOrderedMenus(menus);
+    setSavedOrder(menus.map((menu) => menu.id).join(","));
   }, [menus]);
 
   function moveMenu(targetId: string) {
@@ -49,9 +51,13 @@ export function MenuTable({
   }
 
   function saveMenuOrder() {
+    const ids = orderedMenus.map((menu) => menu.id).join(",");
+    if (!ids || ids === savedOrder) return;
+
     const formData = new FormData();
     formData.set("type", "menu");
-    formData.set("ids", orderedMenus.map((menu) => menu.id).join(","));
+    formData.set("ids", ids);
+    setSavedOrder(ids);
     startTransition(() => {
       void updateSortOrderAction(formData);
     });
@@ -63,11 +69,8 @@ export function MenuTable({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold">Menü listesi</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Menüleri sürükleyerek sıralayın; kayıtları görüntüleyin, düzenleyin veya silin.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Menüleri sürükleyerek sıralayın; sıralama bırakınca otomatik kaydedilir.</p>
           </div>
-          <Button type="button" variant="outline" onClick={saveMenuOrder} disabled={pending}>
-            Sıralamayı kaydet
-          </Button>
         </div>
 
         <div className="overflow-x-auto">
@@ -90,7 +93,10 @@ export function MenuTable({
                     event.preventDefault();
                     moveMenu(menu.id);
                   }}
-                  onDragEnd={() => setDraggedId(null)}
+                  onDragEnd={() => {
+                    saveMenuOrder();
+                    setDraggedId(null);
+                  }}
                   className="grid grid-cols-[44px_96px_minmax(220px,1fr)_160px_120px_260px] items-center gap-3 px-3 py-3"
                 >
                   <div className="flex cursor-grab justify-center text-muted-foreground">

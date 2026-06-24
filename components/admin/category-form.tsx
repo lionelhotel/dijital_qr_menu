@@ -4,54 +4,57 @@ import { TranslatedInputField } from "@/components/forms/translated-input-field"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export type MenuTranslation = {
+export type CategoryTranslation = {
   locale: string;
   name: string;
   description: string | null;
 };
 
-export type MenuFormMenu = {
+export type CategoryFormCategory = {
   id: string;
+  parentId: string | null;
   slug: string;
   imageUrl: string | null;
   sortOrder: number;
   isActive: boolean;
-  translations: MenuTranslation[];
+  translations: CategoryTranslation[];
 };
 
 type MediaItem = { id: string; url: string; originalName: string; category: { name: string } | null };
 type MediaCategory = { id: string; name: string };
 
-export function MenuForm({
+export function CategoryForm({
   action,
-  menu,
+  category,
+  categories,
   media,
   mediaCategories,
   variant = "edit"
 }: {
   action: (formData: FormData) => void | Promise<void>;
-  menu?: MenuFormMenu;
+  category?: CategoryFormCategory;
+  categories: CategoryFormCategory[];
   media: MediaItem[];
   mediaCategories: MediaCategory[];
   variant?: "create" | "edit";
 }) {
-  const tr = menu?.translations.find((item) => item.locale === "tr");
-  const en = menu?.translations.find((item) => item.locale === "en");
-  const es = menu?.translations.find((item) => item.locale === "es");
+  const tr = category?.translations.find((item) => item.locale === "tr");
+  const en = category?.translations.find((item) => item.locale === "en");
+  const es = category?.translations.find((item) => item.locale === "es");
 
   return (
     <form action={action} className="mt-4 space-y-3">
-      {menu ? <input type="hidden" name="id" value={menu.id} /> : null}
+      {category ? <input type="hidden" name="id" value={category.id} /> : null}
 
       <Section number="1" title="Temel bilgiler">
         <div className="grid gap-3 xl:grid-cols-3">
           <div className="rounded-md border border-border p-3">
-            <h3 className="mb-3 font-semibold">Menü adı</h3>
-            <LabeledField label="Türkçe menü adı">
+            <h3 className="mb-3 font-semibold">Kategori adı</h3>
+            <LabeledField label="Türkçe kategori adı">
               <Input name="name_tr" defaultValue={tr?.name} required />
             </LabeledField>
             <TranslatedInputField
-              label="İngilizce menü adı"
+              label="İngilizce kategori adı"
               name="name_en"
               sourceName="name_tr"
               targetLocale="en"
@@ -60,7 +63,7 @@ export function MenuForm({
               fieldClassName="mt-3"
             />
             <TranslatedInputField
-              label="İspanyolca menü adı"
+              label="İspanyolca kategori adı"
               name="name_es"
               sourceName="name_tr"
               targetLocale="es"
@@ -95,35 +98,47 @@ export function MenuForm({
         </div>
       </Section>
 
-      <Section number="2" title="Adres ve durum">
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_160px]">
+      <Section number="2" title="Bağlantı ve durum">
+        <div className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_140px_160px]">
+          <LabeledField label="Üst kategori">
+            <select name="parentId" defaultValue={category?.parentId ?? ""} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm">
+              <option value="">Üst kategori yok</option>
+              {categories
+                .filter((item) => item.id !== category?.id)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.translations.find((translation) => translation.locale === "tr")?.name}
+                  </option>
+                ))}
+            </select>
+          </LabeledField>
           <LabeledField label="URL slug">
-            <Input name="slug" defaultValue={menu?.slug} />
+            <Input name="slug" defaultValue={category?.slug} />
           </LabeledField>
           <LabeledField label="Sıra">
-            <Input name="sortOrder" type="number" defaultValue={menu?.sortOrder ?? 0} />
+            <Input name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 0} />
           </LabeledField>
           <label className="flex items-end gap-2 pb-2 text-sm">
-            <input name="isActive" type="checkbox" defaultChecked={menu?.isActive ?? true} />
+            <input name="isActive" type="checkbox" defaultChecked={category?.isActive ?? true} />
             Aktif
           </label>
         </div>
       </Section>
 
-      <Section number="3" title="Menü görseli">
+      <Section number="3" title="Kategori görseli">
         <MediaPickerField
           name="imageUrl"
-          defaultValue={menu?.imageUrl ?? ""}
+          defaultValue={category?.imageUrl ?? ""}
           media={media}
           categories={mediaCategories}
-          label="Menü görseli seç"
+          label="Kategori görseli seç"
           targetWidth={1400}
           targetHeight={520}
         />
       </Section>
 
       <div className="flex justify-end">
-        <Button type="submit">{variant === "create" ? "Menüyü kaydet" : "Kaydet"}</Button>
+        <Button type="submit">{variant === "create" ? "Kategoriyi kaydet" : "Kaydet"}</Button>
       </div>
     </form>
   );
