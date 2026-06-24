@@ -1,27 +1,73 @@
-import Image from "next/image";
-import { createMenuAction, deleteMenuAction, updateMenuAction } from "@/lib/admin/actions";
+import { Search } from "lucide-react";
+import { createMenuAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { MediaPickerField } from "@/components/admin/media-picker-field";
-import { SortableList } from "@/components/admin/sortable-list";
-import { LabeledField } from "@/components/forms/labeled-field";
-import { TranslatedInputField } from "@/components/forms/translated-input-field";
+import { MenuForm } from "@/components/admin/menu-form";
+import { MenuTable, type MenuTableRow } from "@/components/admin/menu-table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-export default async function MenusPage() {
+export default async function MenusPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ q?: string; status?: string }>;
+}) {
   await requireAdmin();
+  const filters = await searchParams;
+  const query = filters?.q?.trim() ?? "";
+  const status = filters?.status ?? "";
+
+  const where = {
+    deletedAt: null,
+    ...(status === "active" ? { isActive: true } : {}),
+    ...(status === "passive" ? { isActive: false } : {}),
+    ...(query
+      ? {
+          OR: [
+            { slug: { contains: query, mode: "insensitive" as const } },
+            { translations: { some: { name: { contains: query, mode: "insensitive" as const } } } },
+            { translations: { some: { description: { contains: query, mode: "insensitive" as const } } } }
+          ]
+        }
+      : {})
+  };
+
   const [menus, media, mediaCategories] = await Promise.all([
     prisma.menu.findMany({
-      where: { deletedAt: null },
+      where,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-      include: { translations: true, products: true }
+      include: {
+        translations: true,
+        _count: { select: { products: true } }
+      }
     }),
-    prisma.media.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 200 }),
-    prisma.mediaCategory.findMany({ where: { deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
+    prisma.media.findMany({
+      where: { deletedAt: null, isActive: true },
+      orderBy: { createdAt: "desc" },
+      include: { category: true },
+      take: 200
+    }),
+    prisma.mediaCategory.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
+    })
   ]);
+
+  const rows: MenuTableRow[] = menus.map((menu) => ({
+    id: menu.id,
+    slug: menu.slug,
+    imageUrl: menu.imageUrl,
+    sortOrder: menu.sortOrder,
+    isActive: menu.isActive,
+    productCount: menu._count.products,
+    translations: menu.translations.map((translation) => ({
+      locale: translation.locale,
+      name: translation.name,
+      description: translation.description
+    }))
+  }));
 
   return (
     <AdminShell>
@@ -29,83 +75,39 @@ export default async function MenusPage() {
       <p className="mt-2 text-sm text-muted-foreground">
         Ana sayfada ilk görünen Restaurant Menu, Room Service Menu, Lobby Bar Menu gibi seçenekleri yönetin.
       </p>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[420px_1fr]">
+
+      <div className="mt-6 space-y-6">
         <Card className="p-4">
-          <h2 className="font-semibold">Menü oluştur</h2>
-          <MenuForm action={createMenuAction} media={media} mediaCategories={mediaCategories} />
+          <h2 className="text-xl font-semibold">Menü oluştur</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Menü adları, açıklamalar ve ana görsel yatay alanda düzenlenir.</p>
+          <MenuForm action={createMenuAction} media={media} mediaCategories={mediaCategories} variant="create" />
         </Card>
-        <div className="space-y-4">
-          <Card className="p-4">
-            <h2 className="mb-3 font-semibold">Sürükle bırak sıralama</h2>
-            <SortableList
-              type="menu"
-              items={menus.map((menu) => ({
-                id: menu.id,
-                label: menu.translations.find((item) => item.locale === "tr")?.name ?? menu.slug
-              }))}
-            />
-          </Card>
-          {menus.map((menu) => (
-            <Card key={menu.id} className="p-4">
-              <div className="grid gap-4 lg:grid-cols-[180px_1fr]">
-                <div className="relative aspect-video overflow-hidden rounded-md bg-muted">
-                  <Image src={menu.imageUrl ?? "/placeholders/category.svg"} alt={menu.slug} fill className="object-cover" />
-                </div>
-                <MenuForm action={updateMenuAction} menu={menu} media={media} mediaCategories={mediaCategories} />
-                <form action={deleteMenuAction} className="lg:col-start-2">
-                  <input type="hidden" name="id" value={menu.id} />
-                  <Button type="submit" variant="outline">Sil</Button>
-                </form>
-              </div>
-            </Card>
-          ))}
-        </div>
+
+        <Card className="p-4">
+          <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_auto]">
+            <label className="relative block">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input name="q" defaultValue={query} className="pl-10" placeholder="Menü ara" />
+            </label>
+            <select
+              name="status"
+              defaultValue={status}
+              className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
+            >
+              <option value="">Tüm durumlar</option>
+              <option value="active">Aktif</option>
+              <option value="passive">Pasif</option>
+            </select>
+            <Button type="submit">Ara</Button>
+          </form>
+        </Card>
+
+        {rows.length > 0 ? (
+          <MenuTable menus={rows} media={media} mediaCategories={mediaCategories} />
+        ) : (
+          <Card className="p-6 text-sm text-muted-foreground">Bu arama ve filtreye uygun menü bulunamadı.</Card>
+        )}
       </div>
     </AdminShell>
-  );
-}
-
-function MenuForm({
-  action,
-  menu,
-  media,
-  mediaCategories
-}: {
-  action: (formData: FormData) => Promise<void>;
-  menu?: {
-    id: string;
-    slug: string;
-    imageUrl: string | null;
-    sortOrder: number;
-    isActive: boolean;
-    translations: { locale: string; name: string; description: string | null }[];
-  };
-  media: { id: string; url: string; originalName: string; category: { name: string } | null }[];
-  mediaCategories: { id: string; name: string }[];
-}) {
-  const tr = menu?.translations.find((item) => item.locale === "tr");
-  const en = menu?.translations.find((item) => item.locale === "en");
-  const es = menu?.translations.find((item) => item.locale === "es");
-
-  return (
-    <form action={action} className="mt-4 space-y-3">
-      {menu ? <input type="hidden" name="id" value={menu.id} /> : null}
-      <LabeledField label="Türkçe menü adı"><Input name="name_tr" defaultValue={tr?.name} required /></LabeledField>
-      <TranslatedInputField label="İngilizce menü adı" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
-      <TranslatedInputField label="İspanyolca menü adı" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
-      <LabeledField label="Türkçe açıklama"><Input name="description_tr" defaultValue={tr?.description ?? ""} /></LabeledField>
-      <TranslatedInputField label="İngilizce açıklama" name="description_en" sourceName="description_tr" targetLocale="en" defaultValue={en?.description ?? ""} />
-      <TranslatedInputField label="İspanyolca açıklama" name="description_es" sourceName="description_tr" targetLocale="es" defaultValue={es?.description ?? ""} />
-      <LabeledField label="URL slug"><Input name="slug" defaultValue={menu?.slug} /></LabeledField>
-      <LabeledField label="Mevcut görsel URL">
-        <MediaPickerField name="imageUrl" defaultValue={menu?.imageUrl ?? ""} media={media} categories={mediaCategories} label="Menü görseli seç" targetWidth={1400} targetHeight={520} />
-      </LabeledField>
-      <LabeledField label="Sıra"><Input name="sortOrder" type="number" defaultValue={menu?.sortOrder ?? 0} /></LabeledField>
-      <label className="flex items-center gap-2 text-sm">
-        <input name="isActive" type="checkbox" defaultChecked={menu?.isActive ?? true} />
-        Aktif
-      </label>
-      <Button type="submit">Kaydet</Button>
-    </form>
   );
 }
