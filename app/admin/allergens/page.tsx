@@ -67,27 +67,22 @@ function AllergenForm({
   const en = item?.translations.find((translation) => translation.locale === "en");
   const es = item?.translations.find((translation) => translation.locale === "es");
   const isCreate = variant === "create";
-  const formClassName = isCreate ? "mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4" : "space-y-3";
-  const wideFieldClassName = isCreate ? "md:col-span-2" : undefined;
-  const fullFieldClassName = isCreate ? "md:col-span-2 xl:col-span-4" : undefined;
 
   return (
-    <form action={action} className={formClassName}>
+    <form action={action} className={isCreate ? "mt-4 space-y-3" : "space-y-3"}>
       {item ? <input type="hidden" name="id" value={item.id} /> : null}
-      <div className={wideFieldClassName}>
-        <KeyIconFields sourceName="name_tr" defaultKey={item?.key} defaultIcon={item?.icon} type="allergen" />
-      </div>
+      <KeyIconFields sourceName="name_tr" defaultKey={item?.key} defaultIcon={item?.icon} type="allergen" />
       <LabeledField label="Alerjen Ürün">
         <Input name="name_tr" defaultValue={tr?.name} required />
       </LabeledField>
       <TranslatedInputField label="İngilizce ad" name="name_en" sourceName="name_tr" targetLocale="en" defaultValue={en?.name} required />
       <TranslatedInputField label="İspanyolca ad" name="name_es" sourceName="name_tr" targetLocale="es" defaultValue={es?.name} required />
-      <LabeledField label="Türkçe açıklama" className={wideFieldClassName}>
+      <LabeledField label="Türkçe açıklama">
         <Input name="description_tr" defaultValue={tr?.description ?? ""} />
       </LabeledField>
-      <TranslatedInputField label="İngilizce açıklama" name="description_en" sourceName="description_tr" targetLocale="en" defaultValue={en?.description ?? ""} fieldClassName={wideFieldClassName} />
-      <TranslatedInputField label="İspanyolca açıklama" name="description_es" sourceName="description_tr" targetLocale="es" defaultValue={es?.description ?? ""} fieldClassName={wideFieldClassName} />
-      <label className={`flex items-center gap-2 text-sm ${fullFieldClassName ?? ""}`}>
+      <TranslatedInputField label="İngilizce açıklama" name="description_en" sourceName="description_tr" targetLocale="en" defaultValue={en?.description ?? ""} />
+      <TranslatedInputField label="İspanyolca açıklama" name="description_es" sourceName="description_tr" targetLocale="es" defaultValue={es?.description ?? ""} />
+      <label className="flex items-center gap-2 text-sm">
         <input name="isActive" type="checkbox" defaultChecked={item?.isActive ?? true} />
         Aktif
       </label>
