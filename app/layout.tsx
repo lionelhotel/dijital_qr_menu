@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { prisma } from "@/lib/database/prisma";
+import { createThemeStyle, themeClassName } from "@/lib/theme/app-theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,10 +15,14 @@ export const viewport: Viewport = {
   themeColor: "#F7F4EE"
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const theme = process.env.DATABASE_URL
+    ? await prisma.themeSetting.findFirst({ where: { isActive: true }, orderBy: { createdAt: "asc" } }).catch(() => null)
+    : null;
+
   return (
-    <html lang="tr">
-      <body>{children}</body>
+    <html lang="tr" className={themeClassName(theme)}>
+      <body style={createThemeStyle(theme)}>{children}</body>
     </html>
   );
 }
