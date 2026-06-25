@@ -1,0 +1,2 @@
+ALTER TABLE "BusinessSetting"
+ADD COLUMN IF NOT EXISTS "introZoomEnabled" BOOLEAN NOT NULL DEFAULT true;

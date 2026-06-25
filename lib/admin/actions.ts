@@ -387,6 +387,7 @@ export async function updateSettingsAction(formData: FormData) {
   const serviceText = readOptionalLocalized(formData, "introButton");
   const introMediaUrl = String(formData.get("introMediaUrl") || "") || undefined;
   const introMediaKind = String(formData.get("introMediaKind") || "IMAGE");
+  const introZoomEnabled = formData.get("introZoomEnabled") === "on";
 
   await prisma.$transaction([
     prisma.businessSetting.upsert({
@@ -398,6 +399,7 @@ export async function updateSettingsAction(formData: FormData) {
         coverImageUrl,
         introMediaUrl,
         introMediaKind,
+        introZoomEnabled,
         phone: String(formData.get("phone") || "") || null,
         email: String(formData.get("email") || "") || null,
         website: String(formData.get("website") || "") || null,
@@ -415,6 +417,7 @@ export async function updateSettingsAction(formData: FormData) {
         coverImageUrl,
         introMediaUrl,
         introMediaKind,
+        introZoomEnabled,
         phone: String(formData.get("phone") || "") || null,
         email: String(formData.get("email") || "") || null,
         website: String(formData.get("website") || "") || null,

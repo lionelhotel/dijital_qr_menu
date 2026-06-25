@@ -91,6 +91,7 @@ model BusinessSetting {
   coverImageUrl   String?
   introMediaUrl   String?
   introMediaKind  String?  @default("IMAGE")
+  introZoomEnabled Boolean @default(true)
   phone           String?
   email           String?
   website         String?

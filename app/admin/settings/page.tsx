@@ -93,6 +93,10 @@ export default async function SettingsPage() {
             <LabeledField label="İlk karşılama dikey görsel/video">
               <MediaPickerField name="introMediaUrl" defaultValue={business?.introMediaUrl ?? ""} media={media} categories={mediaCategories} label="Dikey medya seç" targetWidth={1080} targetHeight={1920} />
             </LabeledField>
+            <label className="flex items-center gap-2 text-sm">
+              <input name="introZoomEnabled" type="checkbox" defaultChecked={business?.introZoomEnabled ?? true} />
+              İlk karşılama görselinde zoom efekti aktif
+            </label>
           </div>
         </Card>
         <Card className="p-4">

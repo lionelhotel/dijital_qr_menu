@@ -31,6 +31,7 @@ export default async function LocalizedMenuPage({
         coverImageUrl: data.business?.coverImageUrl,
         introMediaUrl: data.business?.introMediaUrl,
         introMediaKind: data.business?.introMediaKind,
+        introZoomEnabled: data.business?.introZoomEnabled,
         welcomeText: data.business?.welcomeText,
         welcomeSubText: data.business?.welcomeSubText,
         serviceText: data.business?.serviceText
