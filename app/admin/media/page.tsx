@@ -1,8 +1,7 @@
 import {
   createMediaCategoryAction,
   deleteMediaCategoryAction,
-  updateMediaCategoryAction,
-  uploadMediaAction
+  updateMediaCategoryAction
 } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
@@ -43,7 +42,7 @@ export default async function MediaPage() {
             <MediaCategoryForm action={createMediaCategoryAction} variant="create" />
           </div>
           <div className="pt-4">
-            <MediaUploadForm categories={categories} action={uploadMediaAction} />
+            <MediaUploadForm categories={categories} />
           </div>
           {categories.length > 0 ? (
             <details className="mt-4 rounded-lg border border-border p-3">
