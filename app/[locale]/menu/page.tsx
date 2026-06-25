@@ -11,7 +11,7 @@ export default async function LocalizedMenuPage({
   searchParams
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ location?: string }>;
+  searchParams: Promise<{ location?: string; view?: string }>;
 }) {
   const { locale } = await params;
   const query = await searchParams;
@@ -29,8 +29,13 @@ export default async function LocalizedMenuPage({
         venueName: data.business?.venueName ?? "Restaurant & Bar",
         logoUrl: data.business?.logoUrl,
         coverImageUrl: data.business?.coverImageUrl,
-        welcomeText: data.business?.welcomeText
+        introMediaUrl: data.business?.introMediaUrl,
+        introMediaKind: data.business?.introMediaKind,
+        welcomeText: data.business?.welcomeText,
+        welcomeSubText: data.business?.welcomeSubText,
+        serviceText: data.business?.serviceText
       }}
+      showIntro={query.view !== "menus"}
       categories={data.menus.map((menu) => ({
         id: menu.id,
         slug: menu.localizedSlug,

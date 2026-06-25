@@ -53,6 +53,7 @@ export default async function MediaPage() {
               id: item.id,
               url: item.url,
               originalName: item.originalName,
+              kind: item.kind,
               fileName: item.fileName,
               categoryId: item.categoryId,
               categoryName: item.category?.name ?? null,

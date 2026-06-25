@@ -27,14 +27,16 @@ export default async function SelectedMenuPage({
     <MenuHome
       locale={locale}
       basePath={`/${locale}/menu/${slug}`}
-      backHref={`/${locale}/menu`}
+      backHref={`/${locale}/menu?view=menus`}
       backLabel="Başa dön"
       business={{
         businessName: data.menu.label ?? "Menu",
         venueName: data.business?.venueName ?? "Restaurant & Bar",
         logoUrl: data.business?.logoUrl,
         coverImageUrl: data.menu.imageUrl ?? data.business?.coverImageUrl,
-        welcomeText: data.business?.welcomeText
+        welcomeText: data.business?.welcomeText,
+        welcomeSubText: data.business?.welcomeSubText,
+        serviceText: data.business?.serviceText
       }}
       categories={data.categories.map((category) => ({
         id: category.id,

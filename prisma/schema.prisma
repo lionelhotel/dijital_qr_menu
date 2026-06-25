@@ -27,6 +27,7 @@ enum AuditAction {
 
 enum MediaKind {
   IMAGE
+  VIDEO
   DOCUMENT
 }
 
@@ -88,6 +89,8 @@ model BusinessSetting {
   logoUrl         String?
   faviconUrl      String?
   coverImageUrl   String?
+  introMediaUrl   String?
+  introMediaKind  String?  @default("IMAGE")
   phone           String?
   email           String?
   website         String?

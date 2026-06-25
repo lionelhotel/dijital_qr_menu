@@ -68,14 +68,14 @@ export function MediaUploadForm({
       >
         <Upload className="mb-2 h-6 w-6 text-muted-foreground" />
         <p className="text-sm font-medium">Görselleri buraya bırakın veya seçin</p>
-        <p className="text-xs text-muted-foreground">Toplu yükleme desteklenir. JPEG, PNG, WEBP.</p>
+        <p className="text-xs text-muted-foreground">Toplu yükleme desteklenir. JPEG, PNG, WEBP, MP4, WEBM.</p>
         {names.length ? <p className="mt-2 text-xs text-muted-foreground">{names.length} dosya seçildi</p> : null}
       </div>
       <input
         ref={inputRef}
         name="files"
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
         multiple
         className="hidden"
         onChange={(event) => readFiles(event.target.files)}

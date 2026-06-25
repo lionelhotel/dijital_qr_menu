@@ -3,7 +3,7 @@ import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit/audit";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
-import { storeImage } from "@/lib/uploads/images";
+import { storeUploadedMedia } from "@/lib/uploads/images";
 
 export async function POST(request: Request) {
   const user = await requireAdmin();
@@ -17,13 +17,13 @@ export async function POST(request: Request) {
 
     const width = Number(formData.get("width") || 1600);
     const heightValue = String(formData.get("height") || "");
-    const stored = await storeImage(file, {
+    const stored = await storeUploadedMedia(file, {
       width: Number.isFinite(width) ? width : 1600,
       height: heightValue ? Number(heightValue) : undefined
     });
     const media = await prisma.media.create({
       data: {
-        kind: "IMAGE",
+        kind: stored.kind,
         categoryId: String(formData.get("categoryId") || "") || null,
         originalName: file.name,
         fileName: stored.fileName,

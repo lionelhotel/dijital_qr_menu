@@ -17,6 +17,8 @@ export default async function SettingsPage() {
     prisma.mediaCategory.findMany({ where: { deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
   ]);
   const welcome = localizedSetting(business?.welcomeText);
+  const welcomeSub = localizedSetting(business?.welcomeSubText);
+  const introButton = localizedSetting(business?.serviceText);
 
   return (
     <AdminShell>
@@ -33,14 +35,32 @@ export default async function SettingsPage() {
             <LabeledField label="Alt başlık">
               <Input name="venueName" defaultValue={business?.venueName} required />
             </LabeledField>
-            <LabeledField label="Ana menü karşılama metni (TR)">
+            <LabeledField label="Hareketli başlık (TR)">
               <Input name="welcome_tr" defaultValue={welcome.tr} />
             </LabeledField>
-            <LabeledField label="Ana menü karşılama metni (EN)">
+            <LabeledField label="Hareketli başlık (EN)">
               <Input name="welcome_en" defaultValue={welcome.en} />
             </LabeledField>
-            <LabeledField label="Ana menü karşılama metni (ES)">
+            <LabeledField label="Hareketli başlık (ES)">
               <Input name="welcome_es" defaultValue={welcome.es} />
+            </LabeledField>
+            <LabeledField label="Hareketli açıklama (TR)">
+              <Input name="welcomeSub_tr" defaultValue={welcomeSub.tr} />
+            </LabeledField>
+            <LabeledField label="Hareketli açıklama (EN)">
+              <Input name="welcomeSub_en" defaultValue={welcomeSub.en} />
+            </LabeledField>
+            <LabeledField label="Hareketli açıklama (ES)">
+              <Input name="welcomeSub_es" defaultValue={welcomeSub.es} />
+            </LabeledField>
+            <LabeledField label="Menü butonu metni (TR)">
+              <Input name="introButton_tr" defaultValue={introButton.tr} placeholder="Menüyü görüntüle" />
+            </LabeledField>
+            <LabeledField label="Menü butonu metni (EN)">
+              <Input name="introButton_en" defaultValue={introButton.en} placeholder="View menu" />
+            </LabeledField>
+            <LabeledField label="Menü butonu metni (ES)">
+              <Input name="introButton_es" defaultValue={introButton.es} placeholder="Ver menú" />
             </LabeledField>
             <LabeledField label="Web sitesi">
               <Input name="website" defaultValue={business?.website ?? ""} />
@@ -59,6 +79,19 @@ export default async function SettingsPage() {
             </LabeledField>
             <LabeledField label="Kapak görseli URL">
               <MediaPickerField name="coverImageUrl" defaultValue={business?.coverImageUrl ?? ""} media={media} categories={mediaCategories} label="Kapak görseli seç" targetWidth={1600} targetHeight={900} />
+            </LabeledField>
+            <LabeledField label="İlk karşılama dikey medya tipi">
+              <select
+                name="introMediaKind"
+                defaultValue={business?.introMediaKind ?? "IMAGE"}
+                className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
+              >
+                <option value="IMAGE">Görsel</option>
+                <option value="VIDEO">Video</option>
+              </select>
+            </LabeledField>
+            <LabeledField label="İlk karşılama dikey görsel/video">
+              <MediaPickerField name="introMediaUrl" defaultValue={business?.introMediaUrl ?? ""} media={media} categories={mediaCategories} label="Dikey medya seç" targetWidth={1080} targetHeight={1920} />
             </LabeledField>
           </div>
         </Card>

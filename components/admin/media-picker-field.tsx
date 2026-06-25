@@ -16,6 +16,7 @@ type MediaItem = {
   id: string;
   url: string;
   originalName: string;
+  kind?: "IMAGE" | "VIDEO" | "DOCUMENT";
   categoryId?: string | null;
   category?: MediaCategory | null;
   tags?: string | null;
@@ -52,6 +53,8 @@ export function MediaPickerField({
   const [width, setWidth] = useState(String(targetWidth));
   const [height, setHeight] = useState(targetHeight ? String(targetHeight) : "");
   const fileRef = useRef<HTMLInputElement>(null);
+  const selectedItem = items.find((item) => item.url === value);
+  const selectedIsVideo = isVideoMedia(selectedItem);
 
   const visibleItems = items.filter((item) => {
     const itemCategoryId = item.categoryId ?? item.category?.id ?? "";
@@ -102,7 +105,11 @@ export function MediaPickerField({
         className="group relative block aspect-video w-full max-w-xl overflow-hidden rounded-lg border border-border bg-muted text-left"
       >
         {value ? (
-          <Image src={value} alt={label} fill className="object-cover transition group-hover:opacity-80" />
+          selectedIsVideo ? (
+            <video src={value} className="h-full w-full object-cover transition group-hover:opacity-80" muted playsInline />
+          ) : (
+            <Image src={value} alt={label} fill className="object-cover transition group-hover:opacity-80" />
+          )
         ) : (
           <span className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
             <ImageIcon className="h-4 w-4" />
@@ -174,7 +181,7 @@ export function MediaPickerField({
                 <input
                   ref={fileRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
                   multiple
                   className="hidden"
                   onChange={(event) => void uploadSelectedFiles(event.target.files)}
@@ -215,7 +222,11 @@ export function MediaPickerField({
                     className="overflow-hidden rounded-lg border border-border text-left transition hover:border-accent"
                   >
                     <div className="relative aspect-video bg-muted">
-                      <Image src={item.url} alt={item.originalName} fill className="object-cover" />
+                      {isVideoMedia(item) ? (
+                        <video src={item.url} className="h-full w-full object-cover" muted playsInline />
+                      ) : (
+                        <Image src={item.url} alt={item.originalName} fill className="object-cover" />
+                      )}
                     </div>
                     <div className="p-2 text-xs">
                       <p className="truncate text-muted-foreground">{item.tags || "Etiket yok"}</p>
@@ -233,6 +244,11 @@ export function MediaPickerField({
       ) : null}
     </div>
   );
+}
+
+function isVideoMedia(item?: MediaItem) {
+  if (!item) return false;
+  return item.kind === "VIDEO" || /\.(mp4|webm|mov)$/i.test(item.url);
 }
 
 function showFlash(type: "success" | "error" | "info", message: string) {

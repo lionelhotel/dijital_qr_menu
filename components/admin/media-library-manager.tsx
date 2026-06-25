@@ -18,6 +18,7 @@ type MediaItem = {
   id: string;
   url: string;
   originalName: string;
+  kind: "IMAGE" | "VIDEO" | "DOCUMENT";
   fileName: string;
   categoryId: string | null;
   categoryName: string | null;
@@ -157,13 +158,17 @@ export function MediaLibraryManager({
             <div key={item.id} className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
               <div className="relative">
                 <button type="button" className="block w-full text-left" onClick={() => setPreviewItem(item)}>
-                  <Image
-                    src={item.url}
-                    alt={item.originalName}
-                    width={420}
-                    height={260}
-                    className="aspect-video w-full object-cover transition hover:opacity-85"
-                  />
+                  {item.kind === "VIDEO" ? (
+                    <video src={item.url} className="aspect-video w-full object-cover transition hover:opacity-85" muted playsInline />
+                  ) : (
+                    <Image
+                      src={item.url}
+                      alt={item.originalName}
+                      width={420}
+                      height={260}
+                      className="aspect-video w-full object-cover transition hover:opacity-85"
+                    />
+                  )}
                 </button>
                 <input
                   aria-label="Görsel seç"
@@ -277,7 +282,11 @@ function MediaPreviewModal({ item, onClose }: { item: MediaItem; onClose: () => 
         </div>
         <div className="mt-4 grid min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="relative min-h-[280px] overflow-hidden rounded-lg bg-muted">
-            <Image src={item.url} alt={item.originalName} fill className="object-contain" sizes="(min-width: 1024px) 70vw, 100vw" />
+            {item.kind === "VIDEO" ? (
+              <video src={item.url} className="h-full w-full object-contain" controls autoPlay />
+            ) : (
+              <Image src={item.url} alt={item.originalName} fill className="object-contain" sizes="(min-width: 1024px) 70vw, 100vw" />
+            )}
           </div>
           <div className="space-y-3 overflow-y-auto text-sm">
             <Info label="Kategori" value={item.categoryName ?? "Kategorisiz"} />

@@ -383,6 +383,10 @@ export async function updateSettingsAction(formData: FormData) {
   const coverImageUrl =
     (await uploadedImageUrl(formData, "coverImage", user.id, { width: 1600, height: 900 })) || String(formData.get("coverImageUrl") || "") || undefined;
   const welcomeText = readOptionalLocalized(formData, "welcome");
+  const welcomeSubText = readOptionalLocalized(formData, "welcomeSub");
+  const serviceText = readOptionalLocalized(formData, "introButton");
+  const introMediaUrl = String(formData.get("introMediaUrl") || "") || undefined;
+  const introMediaKind = String(formData.get("introMediaKind") || "IMAGE");
 
   await prisma.$transaction([
     prisma.businessSetting.upsert({
@@ -392,11 +396,15 @@ export async function updateSettingsAction(formData: FormData) {
         venueName: String(formData.get("venueName") || "Restaurant & Bar"),
         logoUrl,
         coverImageUrl,
+        introMediaUrl,
+        introMediaKind,
         phone: String(formData.get("phone") || "") || null,
         email: String(formData.get("email") || "") || null,
         website: String(formData.get("website") || "") || null,
         defaultCurrency: String(formData.get("defaultCurrency") || "TRY"),
         welcomeText,
+        welcomeSubText,
+        serviceText,
         updatedBy: user.id
       },
       create: {
@@ -405,11 +413,15 @@ export async function updateSettingsAction(formData: FormData) {
         venueName: String(formData.get("venueName") || "Restaurant & Bar"),
         logoUrl,
         coverImageUrl,
+        introMediaUrl,
+        introMediaKind,
         phone: String(formData.get("phone") || "") || null,
         email: String(formData.get("email") || "") || null,
         website: String(formData.get("website") || "") || null,
         defaultCurrency: String(formData.get("defaultCurrency") || "TRY"),
         welcomeText,
+        welcomeSubText,
+        serviceText,
         createdBy: user.id
       }
     }),
