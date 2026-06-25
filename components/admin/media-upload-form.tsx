@@ -15,21 +15,30 @@ export function MediaUploadForm({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [names, setNames] = useState<string[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   function readFiles(files: FileList | null) {
-    setNames(Array.from(files ?? []).map((file) => file.name));
+    const nextFiles = Array.from(files ?? []);
+    setSelectedFiles(nextFiles);
+    setNames(nextFiles.map((file) => file.name));
   }
 
   return (
-    <form action={action} className="grid gap-3 xl:grid-cols-[minmax(280px,1fr)_minmax(360px,1fr)_auto] xl:items-end">
+    <form
+      action={(formData) => {
+        const files = selectedFiles.length ? selectedFiles : formData.getAll("files").filter((file): file is File => file instanceof File);
+        formData.delete("files");
+        files.forEach((file) => formData.append("files", file));
+        return action(formData);
+      }}
+      className="grid gap-3 xl:grid-cols-[minmax(280px,1fr)_minmax(360px,1fr)_auto] xl:items-end"
+    >
       <div
         className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted p-4 text-center xl:min-h-24"
         onClick={() => inputRef.current?.click()}
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault();
-          if (!inputRef.current) return;
-          inputRef.current.files = event.dataTransfer.files;
           readFiles(event.dataTransfer.files);
         }}
       >
@@ -44,7 +53,6 @@ export function MediaUploadForm({
         type="file"
         accept="image/jpeg,image/png,image/webp"
         multiple
-        required
         className="hidden"
         onChange={(event) => readFiles(event.target.files)}
       />

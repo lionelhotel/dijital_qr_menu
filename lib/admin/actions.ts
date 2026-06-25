@@ -502,44 +502,49 @@ export async function deleteMediaCategoryAction(formData: FormData) {
 
 export async function uploadMediaAction(formData: FormData) {
   const user = await requireAdmin();
-  const files = formData.getAll("files").filter((file): file is File => file instanceof File && file.size > 0);
-  if (!files.length) throw new Error("Yüklenecek görsel bulunamadı.");
+  try {
+    const files = formData.getAll("files").filter((file): file is File => file instanceof File && file.size > 0);
+    if (!files.length) throw new Error("Yüklenecek görsel bulunamadı.");
 
-  const categoryId = String(formData.get("categoryId") || "") || null;
-  const width = Number(formData.get("width") || 1600);
-  const heightValue = String(formData.get("height") || "");
-  const height = heightValue ? Number(heightValue) : undefined;
+    const categoryId = String(formData.get("categoryId") || "") || null;
+    const width = Number(formData.get("width") || 1600);
+    const heightValue = String(formData.get("height") || "");
+    const height = heightValue ? Number(heightValue) : undefined;
 
-  const created = [];
-  for (const file of files) {
-    const stored = await storeImage(file, {
-      width: Number.isFinite(width) ? width : 1600,
-      height: height && Number.isFinite(height) ? height : undefined
+    const created = [];
+    for (const file of files) {
+      const stored = await storeImage(file, {
+        width: Number.isFinite(width) ? width : 1600,
+        height: height && Number.isFinite(height) ? height : undefined
+      });
+      const media = await prisma.media.create({
+        data: {
+          kind: "IMAGE",
+          categoryId,
+          originalName: file.name,
+          fileName: stored.fileName,
+          mimeType: stored.mimeType,
+          size: stored.size,
+          width: stored.width,
+          height: stored.height,
+          url: stored.url,
+          createdBy: user.id
+        }
+      });
+      created.push(media.id);
+    }
+
+    await audit({
+      userId: user.id,
+      action: AuditAction.CREATE,
+      resourceType: "Media",
+      newValue: { count: created.length, mediaIds: created }
     });
-    const media = await prisma.media.create({
-      data: {
-        kind: "IMAGE",
-        categoryId,
-        originalName: file.name,
-        fileName: stored.fileName,
-        mimeType: stored.mimeType,
-        size: stored.size,
-        width: stored.width,
-        height: stored.height,
-        url: stored.url,
-        createdBy: user.id
-      }
-    });
-    created.push(media.id);
+    await setAdminFlash("success", `${created.length} görsel başarıyla yüklendi.`);
+  } catch (error) {
+    console.error("Media upload failed", error);
+    await setAdminFlash("error", `Görsel yüklenemedi: ${errorMessage(error)}`);
   }
-
-  await audit({
-    userId: user.id,
-    action: AuditAction.CREATE,
-    resourceType: "Media",
-    newValue: { count: created.length, mediaIds: created }
-  });
-  await setAdminFlash("success", `${created.length} görsel başarıyla yüklendi.`);
   revalidatePath("/");
 }
 
