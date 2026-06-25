@@ -16,7 +16,13 @@ type MediaItem = {
   id: string;
   url: string;
   originalName: string;
+  categoryId?: string | null;
   category?: MediaCategory | null;
+  tags?: string | null;
+  width?: number | null;
+  height?: number | null;
+  size?: number;
+  fileName?: string;
 };
 
 export function MediaPickerField({
@@ -41,9 +47,18 @@ export function MediaPickerField({
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [categoryId, setCategoryId] = useState("");
+  const [libraryCategoryId, setLibraryCategoryId] = useState("");
+  const [tagQuery, setTagQuery] = useState("");
   const [width, setWidth] = useState(String(targetWidth));
   const [height, setHeight] = useState(targetHeight ? String(targetHeight) : "");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const visibleItems = items.filter((item) => {
+    const itemCategoryId = item.categoryId ?? item.category?.id ?? "";
+    const categoryMatches = !libraryCategoryId || itemCategoryId === libraryCategoryId;
+    const tagMatches = !tagQuery.trim() || (item.tags ?? "").toLocaleLowerCase("tr-TR").includes(tagQuery.trim().toLocaleLowerCase("tr-TR"));
+    return categoryMatches && tagMatches;
+  });
 
   async function uploadSelectedFiles(files: FileList | null) {
     const selected = Array.from(files ?? []);
@@ -63,6 +78,7 @@ export function MediaPickerField({
         if (!response.ok) throw new Error(data.error || "Görsel yüklenemedi.");
         uploaded.push({
           ...data,
+          categoryId,
           category: categories.find((category) => category.id === categoryId) ?? null
         });
       }
@@ -158,26 +174,53 @@ export function MediaPickerField({
               </div>
             </div>
 
+            <div className="border-b border-border p-4">
+              <div className="grid gap-3 md:grid-cols-[240px_minmax(0,1fr)]">
+                <LabeledField label="Medya kategorisi">
+                  <select
+                    value={libraryCategoryId}
+                    onChange={(event) => setLibraryCategoryId(event.target.value)}
+                    className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
+                  >
+                    <option value="">Tümü</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
+                  </select>
+                </LabeledField>
+                <LabeledField label="Etiket ara">
+                  <Input value={tagQuery} onChange={(event) => setTagQuery(event.target.value)} placeholder="Etikete göre ara" />
+                </LabeledField>
+              </div>
+            </div>
+
             <div className="grid gap-3 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-4">
-              {items.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setValue(item.url);
-                    setOpen(false);
-                  }}
-                  className="overflow-hidden rounded-lg border border-border text-left transition hover:border-accent"
-                >
-                  <div className="relative aspect-video bg-muted">
-                    <Image src={item.url} alt={item.originalName} fill className="object-cover" />
-                  </div>
-                  <div className="p-2 text-xs">
-                    <p className="truncate font-medium">{item.originalName}</p>
-                    <p className="truncate text-muted-foreground">{item.category?.name ?? "Kategorisiz"}</p>
-                  </div>
-                </button>
-              ))}
+              {visibleItems.length ? (
+                visibleItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setValue(item.url);
+                      setOpen(false);
+                    }}
+                    className="overflow-hidden rounded-lg border border-border text-left transition hover:border-accent"
+                  >
+                    <div className="relative aspect-video bg-muted">
+                      <Image src={item.url} alt={item.originalName} fill className="object-cover" />
+                    </div>
+                    <div className="p-2 text-xs">
+                      <p className="truncate font-medium">{item.originalName}</p>
+                      <p className="truncate text-muted-foreground">{item.category?.name ?? "Kategorisiz"}</p>
+                      {item.tags ? <p className="mt-1 truncate text-muted-foreground">{item.tags}</p> : null}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="rounded-lg border border-border bg-muted p-6 text-sm text-muted-foreground sm:col-span-2 lg:col-span-4">
+                  Bu filtrelere uygun görsel bulunamadı.
+                </div>
+              )}
             </div>
           </div>
         </div>

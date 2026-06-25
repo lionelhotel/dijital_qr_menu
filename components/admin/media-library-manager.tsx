@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { X } from "lucide-react";
 import { bulkMediaAction, updateMediaTagsAction } from "@/lib/admin/actions";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LabeledField } from "@/components/forms/labeled-field";
 
@@ -16,8 +18,14 @@ type MediaItem = {
   id: string;
   url: string;
   originalName: string;
+  fileName: string;
   categoryId: string | null;
+  categoryName: string | null;
   tags: string | null;
+  width: number | null;
+  height: number | null;
+  size: number;
+  storagePath: string;
 };
 
 type BulkOperation = "move" | "copy" | "delete";
@@ -38,6 +46,7 @@ export function MediaLibraryManager({
   const [operation, setOperation] = useState<BulkOperation>("move");
   const [targetCategoryId, setTargetCategoryId] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -147,13 +156,15 @@ export function MediaLibraryManager({
           {visibleMedia.map((item) => (
             <div key={item.id} className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
               <div className="relative">
-                <Image
-                  src={item.url}
-                  alt={item.originalName}
-                  width={420}
-                  height={260}
-                  className="aspect-video w-full object-cover"
-                />
+                <button type="button" className="block w-full text-left" onClick={() => setPreviewItem(item)}>
+                  <Image
+                    src={item.url}
+                    alt={item.originalName}
+                    width={420}
+                    height={260}
+                    className="aspect-video w-full object-cover transition hover:opacity-85"
+                  />
+                </button>
                 <input
                   aria-label="Görsel seç"
                   checked={selectedIds.has(item.id)}
@@ -209,6 +220,8 @@ export function MediaLibraryManager({
           </div>
         </div>
       ) : null}
+
+      {previewItem ? <MediaPreviewModal item={previewItem} onClose={() => setPreviewItem(null)} /> : null}
     </div>
   );
 }
@@ -245,4 +258,53 @@ function MediaTagInput({
       {pending ? <p className="text-xs text-muted-foreground">Kaydediliyor...</p> : null}
     </div>
   );
+}
+
+function MediaPreviewModal({ item, onClose }: { item: MediaItem; onClose: () => void }) {
+  const resolution = item.width && item.height ? `${item.width} x ${item.height}px` : "Bilinmiyor";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-primary/60 p-4 backdrop-blur-sm">
+      <Card className="mx-auto flex max-h-[92vh] max-w-6xl flex-col overflow-hidden p-4 shadow-2xl">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-xl font-semibold">{item.originalName}</h2>
+            <p className="mt-1 truncate text-sm text-muted-foreground">{item.url}</p>
+          </div>
+          <Button type="button" size="icon" variant="outline" onClick={onClose} aria-label="Kapat">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="mt-4 grid min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="relative min-h-[280px] overflow-hidden rounded-lg bg-muted">
+            <Image src={item.url} alt={item.originalName} fill className="object-contain" sizes="(min-width: 1024px) 70vw, 100vw" />
+          </div>
+          <div className="space-y-3 overflow-y-auto text-sm">
+            <Info label="Kategori" value={item.categoryName ?? "Kategorisiz"} />
+            <Info label="Etiket" value={item.tags || "-"} />
+            <Info label="Çözünürlük" value={resolution} />
+            <Info label="Dosya boyutu" value={formatBytes(item.size)} />
+            <Info label="Dosya dizini" value={item.storagePath} />
+            <Info label="Dosya adı" value={item.fileName} />
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border p-3">
+      <p className="font-medium">{label}</p>
+      <p className="mt-1 break-words text-muted-foreground">{value}</p>
+    </div>
+  );
+}
+
+function formatBytes(size: number) {
+  if (!Number.isFinite(size)) return "Bilinmiyor";
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / 1024 / 1024).toFixed(2)} MB`;
 }

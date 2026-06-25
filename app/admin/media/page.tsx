@@ -1,13 +1,11 @@
 import {
-  createMediaCategoryAction,
-  deleteMediaCategoryAction,
-  updateMediaCategoryAction
+  createMediaCategoryAction
 } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { syncStorageMedia } from "@/lib/uploads/sync-media";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
+import { MediaCategoryManager } from "@/components/admin/media-category-manager";
 import { MediaLibraryManager } from "@/components/admin/media-library-manager";
 import { MediaUploadForm } from "@/components/admin/media-upload-form";
 import { LabeledField } from "@/components/forms/labeled-field";
@@ -40,31 +38,11 @@ export default async function MediaPage() {
           <div className="mt-4 border-b border-border pb-4">
             <h3 className="text-sm font-semibold">Medya kategorisi oluştur</h3>
             <MediaCategoryForm action={createMediaCategoryAction} variant="create" />
+            {categories.length > 0 ? <MediaCategoryManager categories={categories} /> : null}
           </div>
           <div className="pt-4">
             <MediaUploadForm categories={categories} />
           </div>
-          {categories.length > 0 ? (
-            <details className="mt-4 rounded-lg border border-border p-3">
-              <summary className="cursor-pointer text-sm font-semibold">Medya kategorilerini düzenle</summary>
-              <div className="mt-3 grid gap-3 xl:grid-cols-2">
-                {categories.map((category) => (
-                  <Card key={category.id} className="p-4">
-                    <MediaCategoryForm action={updateMediaCategoryAction} category={category} />
-                    <form action={deleteMediaCategoryAction} className="mt-3">
-                      <input type="hidden" name="id" value={category.id} />
-                      <ConfirmSubmitButton
-                        variant="outline"
-                        message="Bu medya kategorisi silinecek. Bu kategoriye bağlı görseller arşivden kaldırılabilir. Devam etmek istiyor musunuz?"
-                      >
-                        Kategoriyi sil
-                      </ConfirmSubmitButton>
-                    </form>
-                  </Card>
-                ))}
-              </div>
-            </details>
-          ) : null}
         </Card>
 
         <Card className="p-4">
@@ -75,8 +53,14 @@ export default async function MediaPage() {
               id: item.id,
               url: item.url,
               originalName: item.originalName,
+              fileName: item.fileName,
               categoryId: item.categoryId,
-              tags: item.tags
+              categoryName: item.category?.name ?? null,
+              tags: item.tags,
+              width: item.width,
+              height: item.height,
+              size: item.size,
+              storagePath: `storage/uploads/${item.fileName}`
             }))}
           />
         </Card>
