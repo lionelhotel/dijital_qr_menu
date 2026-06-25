@@ -91,17 +91,19 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
     <main className="min-h-screen pb-24">
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
-            {business.logoUrl ? (
-              <Image src={business.logoUrl} alt={business.businessName} width={36} height={36} className="h-9 w-9 object-contain" />
-            ) : (
-              "LH"
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{business.businessName}</p>
-            <p className="truncate text-xs text-muted-foreground">{business.venueName}</p>
-          </div>
+          <Link href={`/${locale}/menu`} className="flex min-w-0 flex-1 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
+              {business.logoUrl ? (
+                <Image src={business.logoUrl} alt={business.businessName} width={36} height={36} className="h-9 w-9 object-contain" />
+              ) : (
+                "LH"
+              )}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">{business.businessName}</span>
+              <span className="block truncate text-xs text-muted-foreground">{business.venueName}</span>
+            </span>
+          </Link>
           <LanguageSwitcher locale={locale} />
         </div>
       </header>

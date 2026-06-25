@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { t } from "@/lib/i18n/dictionaries";
 import { LanguageSwitcher } from "./language-switcher";
@@ -73,7 +73,7 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
 
           <div className="relative z-10 flex min-h-[100svh] flex-col px-5 py-5">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
+              <Link href={`/${locale}/menu`} className="flex min-w-0 items-center gap-3">
                 {business.logoUrl ? (
                   <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-white/90 shadow-lg">
                     <Image src={business.logoUrl} alt={business.businessName} fill className="object-contain p-1.5" />
@@ -87,16 +87,10 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
                   <p className="truncate text-sm font-semibold uppercase tracking-[0.22em] text-white/82">{business.businessName}</p>
                   <p className="truncate text-xs tracking-[0.18em] text-white/58">{business.venueName}</p>
                 </div>
-              </div>
-              <LanguageSwitcher locale={locale} />
+              </Link>
             </div>
 
             <div className="flex flex-1 flex-col justify-end pb-[max(2rem,env(safe-area-inset-bottom))] pt-10">
-              <div className="mb-7 inline-flex w-fit items-center gap-2 rounded-md border border-white/20 bg-black/24 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/82 backdrop-blur">
-                <Sparkles className="h-4 w-4 text-accent" />
-                {business.venueName}
-              </div>
-
               <div className="relative min-h-[9.5rem] sm:min-h-[11rem]">
                 {introTitles.map((item, index) => (
                   <h1
@@ -144,19 +138,21 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
     <main className="min-h-screen bg-background pb-12 text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          {business.logoUrl ? (
-            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-card">
-              <Image src={business.logoUrl} alt={business.businessName} fill className="object-contain p-1" />
-            </div>
-          ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
-              LH
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{business.businessName}</p>
-            <p className="truncate text-xs text-muted-foreground">{business.venueName}</p>
-          </div>
+          <Link href={`/${locale}/menu`} className="flex min-w-0 flex-1 items-center gap-3">
+            {business.logoUrl ? (
+              <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-card">
+                <Image src={business.logoUrl} alt={business.businessName} fill className="object-contain p-1" />
+              </span>
+            ) : (
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
+                LH
+              </span>
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">{business.businessName}</span>
+              <span className="block truncate text-xs text-muted-foreground">{business.venueName}</span>
+            </span>
+          </Link>
           <LanguageSwitcher locale={locale} />
         </div>
       </header>
