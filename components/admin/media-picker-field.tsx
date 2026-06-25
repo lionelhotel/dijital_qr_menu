@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { ImageIcon, Upload, X } from "lucide-react";
+import { ImageIcon, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LabeledField } from "@/components/forms/labeled-field";
@@ -99,7 +99,7 @@ export function MediaPickerField({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group relative block aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted text-left"
+        className="group relative block aspect-video w-full max-w-xl overflow-hidden rounded-lg border border-border bg-muted text-left"
       >
         {value ? (
           <Image src={value} alt={label} fill className="object-cover transition group-hover:opacity-80" />
@@ -110,10 +110,18 @@ export function MediaPickerField({
           </span>
         )}
       </button>
-      <Button type="button" variant="outline" onClick={() => setOpen(true)}>
-        <ImageIcon className="h-4 w-4" />
-        Medya arşivi
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+          <ImageIcon className="h-4 w-4" />
+          Medya arşivi
+        </Button>
+        {value ? (
+          <Button type="button" variant="outline" onClick={() => setValue("")}>
+            <Trash2 className="h-4 w-4" />
+            Görseli temizle
+          </Button>
+        ) : null}
+      </div>
 
       {open ? (
         <div className="fixed inset-0 z-50 bg-primary/60 p-4 backdrop-blur-sm">
@@ -210,9 +218,7 @@ export function MediaPickerField({
                       <Image src={item.url} alt={item.originalName} fill className="object-cover" />
                     </div>
                     <div className="p-2 text-xs">
-                      <p className="truncate font-medium">{item.originalName}</p>
-                      <p className="truncate text-muted-foreground">{item.category?.name ?? "Kategorisiz"}</p>
-                      {item.tags ? <p className="mt-1 truncate text-muted-foreground">{item.tags}</p> : null}
+                      <p className="truncate text-muted-foreground">{item.tags || "Etiket yok"}</p>
                     </div>
                   </button>
                 ))
