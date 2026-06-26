@@ -239,6 +239,7 @@ export function ProductCategoryTable({
               dietaryTags={dietaryTags}
               media={media}
               mediaCategories={mediaCategories}
+              onClose={() => setEditProduct(null)}
             />
           </div>
         </div>

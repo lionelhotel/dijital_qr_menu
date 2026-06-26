@@ -166,6 +166,7 @@ export function CategoryTable({
               categories={categoryOptions}
               media={media}
               mediaCategories={mediaCategories}
+              onClose={() => setEditCategory(null)}
             />
           </div>
         </div>

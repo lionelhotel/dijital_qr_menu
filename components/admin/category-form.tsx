@@ -1,3 +1,5 @@
+"use client";
+
 import { MediaPickerField } from "@/components/admin/media-picker-field";
 import { LabeledField } from "@/components/forms/labeled-field";
 import { TranslatedInputField } from "@/components/forms/translated-input-field";
@@ -29,6 +31,7 @@ export function CategoryForm({
   categories,
   media,
   mediaCategories,
+  onClose,
   variant = "edit"
 }: {
   action: (formData: FormData) => void | Promise<void>;
@@ -36,6 +39,7 @@ export function CategoryForm({
   categories: CategoryFormCategory[];
   media: MediaItem[];
   mediaCategories: MediaCategory[];
+  onClose?: () => void;
   variant?: "create" | "edit";
 }) {
   const tr = category?.translations.find((item) => item.locale === "tr");
@@ -43,7 +47,12 @@ export function CategoryForm({
   const es = category?.translations.find((item) => item.locale === "es");
 
   return (
-    <form action={action} className="mt-4 space-y-3">
+    <form
+      action={async (formData) => {
+        await action(formData);
+      }}
+      className="mt-4 space-y-3"
+    >
       {category ? <input type="hidden" name="id" value={category.id} /> : null}
 
       <Section number="1" title="Temel bilgiler">
@@ -137,8 +146,25 @@ export function CategoryForm({
         />
       </Section>
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        {onClose ? (
+          <Button type="button" variant="outline" onClick={onClose}>
+            Kapat
+          </Button>
+        ) : null}
         <Button type="submit">{variant === "create" ? "Kategoriyi kaydet" : "Kaydet"}</Button>
+        {onClose ? (
+          <Button
+            type="submit"
+            variant="accent"
+            formAction={async (formData) => {
+              await action(formData);
+              onClose();
+            }}
+          >
+            Kaydet kapat
+          </Button>
+        ) : null}
       </div>
     </form>
   );

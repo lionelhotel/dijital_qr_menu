@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { MediaPickerField } from "@/components/admin/media-picker-field";
 import { NutritionEnergyField } from "@/components/admin/nutrition-energy-field";
@@ -45,6 +47,7 @@ export function ProductForm({
   dietaryTags,
   media,
   mediaCategories,
+  onClose,
   variant = "edit"
 }: {
   action: (formData: FormData) => Promise<void>;
@@ -55,6 +58,7 @@ export function ProductForm({
   dietaryTags: { id: string; key: string; icon: string; translations: { locale: string; name: string }[] }[];
   media: MediaItem[];
   mediaCategories: MediaCategory[];
+  onClose?: () => void;
   variant?: "create" | "edit";
 }) {
   const tr = product?.translations.find((item) => item.locale === "tr");
@@ -67,7 +71,12 @@ export function ProductForm({
   const sectionSpacing = isCreate ? "mt-4 space-y-1" : "mt-4 space-y-3";
 
   return (
-    <form action={action} className={sectionSpacing}>
+    <form
+      action={async (formData) => {
+        await action(formData);
+      }}
+      className={sectionSpacing}
+    >
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
 
       <ProductFormSection number={1} title="Temel bilgiler">
@@ -180,7 +189,27 @@ export function ProductForm({
           <label className="flex items-center gap-2"><input name="isAvailable" type="checkbox" defaultChecked={product?.isAvailable ?? true} /> Mevcut</label>
           <label className="flex items-center gap-2"><input name="isNew" type="checkbox" defaultChecked={product?.isNew ?? false} /> Yeni</label>
         </div>
-        <Button type="submit" className="min-w-28">Kaydet</Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {onClose ? (
+            <Button type="button" variant="outline" onClick={onClose}>
+              Kapat
+            </Button>
+          ) : null}
+          <Button type="submit" className="min-w-28">Kaydet</Button>
+          {onClose ? (
+            <Button
+              type="submit"
+              variant="accent"
+              className="min-w-32"
+              formAction={async (formData) => {
+                await action(formData);
+                onClose();
+              }}
+            >
+              Kaydet kapat
+            </Button>
+          ) : null}
+        </div>
       </div>
     </form>
   );

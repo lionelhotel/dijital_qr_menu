@@ -35,6 +35,11 @@ export async function createMenuAction(formData: FormData) {
   const user = await requireAdmin();
   const parsed = menuSchema.parse(readMenuForm(formData));
   const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1400, height: 520 })) || parsed.imageUrl || undefined;
+  if (!(await ensureMenuSlugAvailable(parsed.slug))) {
+    await setAdminFlash("error", "Bu URL slug başka bir menüde kullanılıyor. Lütfen farklı bir slug girin.");
+    revalidatePath("/admin/menus");
+    return { ok: false as const };
+  }
 
   const menu = await prisma.menu.create({
     data: {
@@ -55,6 +60,7 @@ export async function createMenuAction(formData: FormData) {
   });
 
   await logAndRevalidate(user.id, AuditAction.CREATE, "Menu", menu.id, parsed);
+  return { ok: true as const };
 }
 
 export async function updateMenuAction(formData: FormData) {
@@ -62,6 +68,11 @@ export async function updateMenuAction(formData: FormData) {
   const id = requiredId(formData);
   const parsed = menuSchema.parse(readMenuForm(formData));
   const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1400, height: 520 })) || parsed.imageUrl || undefined;
+  if (!(await ensureMenuSlugAvailable(parsed.slug, id))) {
+    await setAdminFlash("error", "Bu URL slug başka bir menüde kullanılıyor. Lütfen farklı bir slug girin.");
+    revalidatePath("/admin/menus");
+    return { ok: false as const };
+  }
 
   await prisma.menu.update({
     where: { id },
@@ -91,6 +102,7 @@ export async function updateMenuAction(formData: FormData) {
   });
 
   await logAndRevalidate(user.id, AuditAction.UPDATE, "Menu", id, parsed);
+  return { ok: true as const };
 }
 
 export async function deleteMenuAction(formData: FormData) {
@@ -755,6 +767,14 @@ function readOptionalLocalized(formData: FormData, prefix: string) {
 
 function readMany(formData: FormData, key: string) {
   return formData.getAll(key).map(String).filter(Boolean);
+}
+
+async function ensureMenuSlugAvailable(slug: string, currentId?: string) {
+  const existing = await prisma.menu.findUnique({
+    where: { slug },
+    select: { id: true }
+  });
+  return !existing || existing.id === currentId;
 }
 
 async function hasChefDietaryTag(dietaryTagIds: string[]) {

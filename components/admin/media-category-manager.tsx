@@ -75,7 +75,7 @@ export function MediaCategoryManager({ categories }: { categories: MediaCategory
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <MediaCategoryEditForm category={editCategory} />
+            <MediaCategoryEditForm category={editCategory} onClose={() => setEditCategory(null)} />
           </Card>
         </div>
       ) : null}
@@ -83,9 +83,14 @@ export function MediaCategoryManager({ categories }: { categories: MediaCategory
   );
 }
 
-function MediaCategoryEditForm({ category }: { category: MediaCategory }) {
+function MediaCategoryEditForm({ category, onClose }: { category: MediaCategory; onClose: () => void }) {
   return (
-    <form action={updateMediaCategoryAction} className="mt-4 grid gap-3 md:grid-cols-2">
+    <form
+      action={async (formData) => {
+        await updateMediaCategoryAction(formData);
+      }}
+      className="mt-4 grid gap-3 md:grid-cols-2"
+    >
       <input type="hidden" name="id" value={category.id} />
       <LabeledField label="Kategori adı">
         <Input name="name" defaultValue={category.name} required />
@@ -99,8 +104,21 @@ function MediaCategoryEditForm({ category }: { category: MediaCategory }) {
       <LabeledField label="Sıra">
         <Input name="sortOrder" type="number" defaultValue={category.sortOrder} />
       </LabeledField>
-      <div className="flex items-end justify-end">
+      <div className="flex flex-wrap items-end justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Kapat
+        </Button>
         <Button type="submit">Kaydet</Button>
+        <Button
+          type="submit"
+          variant="accent"
+          formAction={async (formData) => {
+            await updateMediaCategoryAction(formData);
+            onClose();
+          }}
+        >
+          Kaydet kapat
+        </Button>
       </div>
     </form>
   );

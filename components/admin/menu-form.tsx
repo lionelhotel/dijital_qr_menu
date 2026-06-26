@@ -1,3 +1,5 @@
+"use client";
+
 import { MediaPickerField } from "@/components/admin/media-picker-field";
 import { LabeledField } from "@/components/forms/labeled-field";
 import { TranslatedInputField } from "@/components/forms/translated-input-field";
@@ -21,18 +23,21 @@ export type MenuFormMenu = {
 
 type MediaItem = { id: string; url: string; originalName: string; category: { name: string } | null };
 type MediaCategory = { id: string; name: string };
+type FormActionResult = void | { ok?: boolean };
 
 export function MenuForm({
   action,
   menu,
   media,
   mediaCategories,
+  onClose,
   variant = "edit"
 }: {
-  action: (formData: FormData) => void | Promise<void>;
+  action: (formData: FormData) => FormActionResult | Promise<FormActionResult>;
   menu?: MenuFormMenu;
   media: MediaItem[];
   mediaCategories: MediaCategory[];
+  onClose?: () => void;
   variant?: "create" | "edit";
 }) {
   const tr = menu?.translations.find((item) => item.locale === "tr");
@@ -40,7 +45,12 @@ export function MenuForm({
   const es = menu?.translations.find((item) => item.locale === "es");
 
   return (
-    <form action={action} className="mt-4 space-y-3">
+    <form
+      action={async (formData) => {
+        await action(formData);
+      }}
+      className="mt-4 space-y-3"
+    >
       {menu ? <input type="hidden" name="id" value={menu.id} /> : null}
 
       <Section number="1" title="Temel bilgiler">
@@ -122,8 +132,25 @@ export function MenuForm({
         />
       </Section>
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        {onClose ? (
+          <Button type="button" variant="outline" onClick={onClose}>
+            Kapat
+          </Button>
+        ) : null}
         <Button type="submit">{variant === "create" ? "Menüyü kaydet" : "Kaydet"}</Button>
+        {onClose ? (
+          <Button
+            type="submit"
+            variant="accent"
+            formAction={async (formData) => {
+              const result = await action(formData);
+              if (!result || result.ok !== false) onClose();
+            }}
+          >
+            Kaydet kapat
+          </Button>
+        ) : null}
       </div>
     </form>
   );

@@ -156,7 +156,7 @@ export function MenuTable({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <MenuForm action={updateMenuAction} menu={editMenu} media={media} mediaCategories={mediaCategories} />
+            <MenuForm action={updateMenuAction} menu={editMenu} media={media} mediaCategories={mediaCategories} onClose={() => setEditMenu(null)} />
           </div>
         </div>
       ) : null}
