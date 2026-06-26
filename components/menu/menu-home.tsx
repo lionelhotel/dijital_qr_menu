@@ -56,6 +56,7 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
                 muted
                 loop
                 playsInline
+                preload="auto"
               />
             ) : (
               <Image
