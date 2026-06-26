@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, Utensils } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { t } from "@/lib/i18n/dictionaries";
 import { LanguageSwitcher } from "./language-switcher";
@@ -136,97 +136,73 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
   }
 
   return (
-    <main className="min-h-screen bg-background pb-12 text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
+    <main className="menu-horizon-shell min-h-screen bg-[#0e0e0e] text-[#e4e2e1]">
+      <header className="fixed left-0 top-0 z-40 w-full border-b border-white/5 bg-[#0e0e0e]/50 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5">
           <Link href={`/${locale}/menu`} className="flex min-w-0 flex-1 items-center gap-3">
             {business.logoUrl ? (
-              <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-card">
+              <span className="relative h-10 w-10 shrink-0 overflow-hidden border border-[#d4af37]/35 bg-black/40">
                 <Image src={business.logoUrl} alt={business.businessName} fill className="object-contain p-1" />
               </span>
             ) : (
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
-                LH
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#d4af37]/35 bg-black/40 text-[#f2ca50]">
+                <Utensils className="h-5 w-5" />
               </span>
             )}
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">{business.businessName}</span>
-              <span className="block truncate text-xs text-muted-foreground">{business.venueName}</span>
+              <span className="block truncate text-xs font-semibold uppercase text-[#f2ca50]">{business.businessName}</span>
+              <span className="block truncate text-[11px] text-[#d0c5af]/70">{business.venueName}</span>
             </span>
           </Link>
           <LanguageSwitcher locale={locale} />
         </div>
       </header>
 
-      <section className="mx-auto max-w-5xl px-4 pt-4 sm:pt-6">
-        <div className="relative min-h-[190px] overflow-hidden rounded-lg border border-border bg-primary text-primary-foreground shadow-2xl sm:min-h-[270px]">
-          <Image
-            src={
-              business.coverImageUrl ??
-              "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=80"
-            }
-            alt={business.venueName}
-            fill
-            priority
-            className="object-cover opacity-65"
-            sizes="(max-width: 768px) 100vw, 1024px"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/45 to-transparent" />
-          <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
-          <div className="absolute bottom-0 max-w-2xl p-4 sm:p-8">
-            {backHref ? (
-              <Link
-                href={backHref}
-                className="mb-3 inline-flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-foreground shadow-lg transition hover:bg-accent/90"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                {backLabel}
-              </Link>
-            ) : null}
-            <h1 className="animate-[introRise_700ms_ease-out_both] font-serif text-3xl leading-tight sm:text-5xl">{business.businessName}</h1>
-            <p className="mt-1 text-base text-primary-foreground/90 sm:text-lg">{business.venueName}</p>
-            <p className="mt-3 max-w-xl animate-[introFade_900ms_ease-out_150ms_both] text-sm text-primary-foreground/90 sm:text-base">
-              {localizedSetting(business.welcomeText, locale) || t(locale, "welcome")}
-            </p>
-          </div>
-        </div>
-      </section>
+      <section className="relative flex min-h-screen flex-col pt-16">
+        {backHref ? (
+          <Link
+            href={backHref}
+            className="fixed left-5 top-20 z-30 inline-flex items-center gap-2 border border-[#d4af37]/40 bg-black/45 px-3 py-2 text-xs font-medium text-[#f2ca50] shadow-[0_18px_50px_rgba(0,0,0,0.35)] backdrop-blur transition hover:bg-[#d4af37] hover:text-[#241a00]"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            {backLabel}
+          </Link>
+        ) : null}
 
-      <section className="mx-auto max-w-5xl px-4 py-5 sm:py-8">
-        <div className="space-y-3 sm:space-y-4">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={basePath ? `${basePath}/${category.slug}` : `/${locale}/menu/${category.slug}`}
-              className="group relative block min-h-[150px] overflow-hidden rounded-lg border border-border bg-primary text-primary-foreground shadow-soft transition duration-300 hover:-translate-y-0.5 hover:shadow-2xl sm:min-h-[190px]"
-            >
-              <Image
-                src={category.imageUrl ?? "/placeholders/category.svg"}
-                alt={category.label ?? ""}
-                fill
-                className="object-cover opacity-75 transition group-hover:scale-105 group-hover:opacity-85"
-                sizes="(max-width: 768px) 100vw, 1024px"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/45 to-primary/15" />
-              <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
-              <div className="absolute inset-0 flex items-center justify-between gap-4 p-5 sm:p-7">
-                <div className="max-w-xl">
-                  <h2 className="font-serif text-3xl leading-tight sm:text-4xl">{category.label}</h2>
-                  {category.description ? (
-                    <p className="mt-2 line-clamp-2 text-sm text-primary-foreground/82 sm:text-base">
-                      {category.description}
-                    </p>
-                  ) : null}
-                  <p className="mt-3 text-xs uppercase text-primary-foreground/70">
-                    {category.productCount} ürün
+        <div className="menu-horizon-bands flex min-h-[calc(100svh-4rem)] flex-1 flex-col">
+          {categories.map((category, index) => {
+            const subtitle = category.description || `${category.productCount} ${locale === "en" ? "items" : locale === "es" ? "productos" : "ürün"}`;
+            return (
+              <Link
+                key={category.id}
+                href={basePath ? `${basePath}/${category.slug}` : `/${locale}/menu/${category.slug}`}
+                className="menu-horizon-band group relative flex min-h-[34svh] flex-1 items-center justify-center overflow-hidden border-b border-white/5 text-center"
+              >
+                <Image
+                  src={category.imageUrl ?? business.coverImageUrl ?? "/placeholders/category.svg"}
+                  alt={category.label ?? ""}
+                  fill
+                  priority={index < 2}
+                  className="menu-horizon-image object-cover"
+                  sizes="100vw"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(14,14,14,0.48),rgba(14,14,14,0.18)_34%,rgba(14,14,14,0.18)_66%,rgba(14,14,14,0.62))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.16),transparent_42%)] opacity-75" />
+                <div className="relative z-10 max-w-4xl px-5 py-10">
+                  <p className="mb-3 line-clamp-2 text-[10px] font-medium uppercase text-[#f2ca50]/45 sm:text-xs">
+                    {subtitle}
                   </p>
+                  <h2 className="font-sans text-4xl font-thin uppercase leading-none text-[#f2ca50] drop-shadow-[0_10px_30px_rgba(0,0,0,0.65)] transition duration-700 group-hover:text-[#ffe088] sm:text-6xl">
+                    {category.label}
+                  </h2>
                 </div>
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-accent/50 bg-accent text-accent-foreground shadow-lg transition group-hover:bg-accent/90">
-                  <ChevronRight className="h-5 w-5" />
-                </span>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="pointer-events-none fixed bottom-4 left-0 z-20 w-full text-center">
+          <p className="text-[8px] uppercase text-[#f2ca50]/25">{localizedSetting(business.welcomeText, locale) || t(locale, "welcome")}</p>
         </div>
       </section>
     </main>

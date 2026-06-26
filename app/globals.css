@@ -126,3 +126,33 @@ img {
     transform: translateY(-4px);
   }
 }
+
+.menu-horizon-image {
+  filter: brightness(0.42) grayscale(18%);
+  transform: scale(1);
+  transition:
+    filter 800ms ease,
+    transform 1200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-horizon-band {
+  transition:
+    flex-grow 500ms cubic-bezier(0.4, 0, 0.2, 1),
+    min-height 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-horizon-band:hover .menu-horizon-image,
+.menu-horizon-band:focus-visible .menu-horizon-image {
+  filter: brightness(0.62) grayscale(0%);
+  transform: scale(1.055);
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .menu-horizon-bands:hover .menu-horizon-band {
+    flex-grow: 0.85;
+  }
+
+  .menu-horizon-bands .menu-horizon-band:hover {
+    flex-grow: 1.45;
+  }
+}
