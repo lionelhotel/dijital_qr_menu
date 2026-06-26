@@ -145,7 +145,7 @@ export function ProductForm({
         </fieldset>
       </ProductFormSection>
 
-      <ProductFormSection number={5} title="Manuel alerjenler">
+      <ProductFormSection number={5} title="Alerjen Bilgisi">
         <fieldset>
           <legend className="text-xs text-muted-foreground">İçerik metninden otomatik alerjen algılanır; burada ek manuel seçim de yapabilirsiniz.</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -159,9 +159,9 @@ export function ProductForm({
         </fieldset>
       </ProductFormSection>
 
-      <ProductFormSection number={6} title="Menude gorunen etiketler">
+      <ProductFormSection number={6} title="Ürün hakkında detay etiketleri">
         <fieldset>
-          <legend className="text-xs text-muted-foreground">Bu secimler menude urun detaylarindaki Etiketler alaninda gorunur.</legend>
+          <legend className="text-xs text-muted-foreground">Bu seçimler menüde ürün detaylarındaki Etiketler alanında görünür.</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {dietaryTags.map((tag) => (
               <label key={tag.id} className="flex items-center gap-2 text-sm">
@@ -175,10 +175,9 @@ export function ProductForm({
       </ProductFormSection>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
-        <div className="grid flex-1 grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+        <div className="grid flex-1 grid-cols-2 gap-3 text-sm sm:grid-cols-3">
           <label className="flex items-center gap-2"><input name="isActive" type="checkbox" defaultChecked={product?.isActive ?? true} /> Aktif</label>
           <label className="flex items-center gap-2"><input name="isAvailable" type="checkbox" defaultChecked={product?.isAvailable ?? true} /> Mevcut</label>
-          <label className="flex items-center gap-2"><input name="isFeatured" type="checkbox" defaultChecked={product?.isFeatured ?? false} /> Şefin önerisi rozeti</label>
           <label className="flex items-center gap-2"><input name="isNew" type="checkbox" defaultChecked={product?.isNew ?? false} /> Yeni</label>
         </div>
         <Button type="submit" className="min-w-28">Kaydet</Button>

@@ -294,7 +294,7 @@ function ProductViewModal({
             <Info label="Kalori / enerji" value={product.calories ? `${product.calories} kcal${energy ? ` / ${energy} kJ` : ""}` : "-"} />
             <Info label="Süre" value={product.prepMinutes ? `${product.prepMinutes} dk` : "-"} />
             <Info label="Acılı" value={product.spicyLevel > 0 ? "Acılı" : "Acısız"} />
-            <Info label="Durum etiketleri" value={[product.isActive ? "Aktif" : "Pasif", product.isFeatured ? "Şefin önerisi rozeti" : "", product.isNew ? "Yeni" : ""].filter(Boolean).join(", ") || "-"} />
+            <Info label="Durum etiketleri" value={[product.isActive ? "Aktif" : "Pasif", product.isNew ? "Yeni" : ""].filter(Boolean).join(", ") || "-"} />
           </div>
         </div>
         <div className="mt-4 space-y-3 text-sm">

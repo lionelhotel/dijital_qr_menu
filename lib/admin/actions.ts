@@ -156,6 +156,7 @@ export async function createProductAction(formData: FormData) {
   const menuIds = readMany(formData, "menuIds");
   const allergenIds = await resolveAllergenIds(formData, parsed);
   const dietaryTagIds = readMany(formData, "dietaryTagIds");
+  const isFeatured = await hasChefDietaryTag(dietaryTagIds);
 
   const product = await prisma.product.create({
     data: {
@@ -168,7 +169,7 @@ export async function createProductAction(formData: FormData) {
       mainImageUrl: imageUrl,
       isActive: parsed.isActive,
       isAvailable: parsed.isAvailable,
-      isFeatured: parsed.isFeatured,
+      isFeatured,
       isNew: parsed.isNew,
       createdBy: user.id,
       translations: { create: productTranslations(parsed) },
@@ -190,6 +191,7 @@ export async function updateProductAction(formData: FormData) {
   const menuIds = readMany(formData, "menuIds");
   const allergenIds = await resolveAllergenIds(formData, parsed);
   const dietaryTagIds = readMany(formData, "dietaryTagIds");
+  const isFeatured = await hasChefDietaryTag(dietaryTagIds);
 
   await prisma.$transaction([
     prisma.productAllergen.deleteMany({ where: { productId: id } }),
@@ -207,7 +209,7 @@ export async function updateProductAction(formData: FormData) {
         mainImageUrl: imageUrl,
         isActive: parsed.isActive,
         isAvailable: parsed.isAvailable,
-        isFeatured: parsed.isFeatured,
+        isFeatured,
         isNew: parsed.isNew,
         updatedBy: user.id,
         translations: { upsert: productTranslationUpserts(id, parsed) },
@@ -753,6 +755,19 @@ function readOptionalLocalized(formData: FormData, prefix: string) {
 
 function readMany(formData: FormData, key: string) {
   return formData.getAll(key).map(String).filter(Boolean);
+}
+
+async function hasChefDietaryTag(dietaryTagIds: string[]) {
+  if (!dietaryTagIds.length) return false;
+  const chefTag = await prisma.dietaryTag.findFirst({
+    where: {
+      id: { in: dietaryTagIds },
+      key: "chef",
+      deletedAt: null
+    },
+    select: { id: true }
+  });
+  return Boolean(chefTag);
 }
 
 function requiredId(formData: FormData) {
