@@ -14,33 +14,33 @@ type ThemeStyle = CSSProperties & Record<`--${string}`, string>;
 
 export function createThemeStyle(theme: ThemeLike): ThemeStyle {
   const darkMode = theme?.darkModeEnabled ?? false;
-  const backgroundHex = theme?.backgroundColor ?? "#F7F4EE";
-  const cardHex = theme?.cardColor ?? "#FFFFFF";
-  const textHex = theme?.textColor ?? "#2B2926";
-  const primary = hexToHsl(theme?.primaryColor ?? "#2B2926", "30 6% 16%");
-  const accent = hexToHsl(theme?.accentColor ?? "#A8844F", "36 36% 48%");
-  const background = hexToHsl(backgroundHex, "37 33% 95%");
-  const card = hexToHsl(cardHex, "0 0% 100%");
-  const foreground = hexToHsl(textHex, "30 6% 16%");
+  const primary = parseHexToHsl(theme?.primaryColor ?? "#2B2926", { h: 30, s: 6, l: 16 });
+  const accent = parseHexToHsl(theme?.accentColor ?? "#A8844F", { h: 36, s: 36, l: 48 });
+  const background = parseHexToHsl(theme?.backgroundColor ?? "#F7F4EE", { h: 37, s: 33, l: 95 });
+  const card = parseHexToHsl(theme?.cardColor ?? "#FFFFFF", { h: 0, s: 0, l: 100 });
+  const foreground = parseHexToHsl(theme?.textColor ?? "#2B2926", { h: 30, s: 6, l: 16 });
   const radius = Number.isFinite(theme?.radius) ? `${theme?.radius}px` : "8px";
-  const customBackground = Boolean(theme?.backgroundColor && theme.backgroundColor !== "#F7F4EE");
-  const customCard = Boolean(theme?.cardColor && theme.cardColor !== "#FFFFFF");
-  const customText = Boolean(theme?.textColor && theme.textColor !== "#2B2926");
+  const darkBackground = darkSurface(background, 9);
+  const darkCard = darkSurface(card.s > 0 ? card : background, 13);
+  const darkMuted = darkSurface(background, 18);
+  const darkBorder = darkSurface(background, 25);
+  const darkForeground = lightText(foreground, 95);
+  const darkMutedForeground = lightText(foreground, 70);
 
   return {
-    "--background": darkMode && !customBackground ? "30 8% 9%" : background,
-    "--foreground": darkMode && !customText ? "37 33% 95%" : foreground,
-    "--card": darkMode && !customCard ? "30 8% 13%" : card,
-    "--card-foreground": darkMode && !customText ? "37 33% 95%" : foreground,
-    "--primary": primary,
-    "--primary-foreground": "37 33% 95%",
-    "--accent": accent,
-    "--accent-foreground": "0 0% 100%",
-    "--muted": darkMode ? "30 7% 18%" : "33 17% 90%",
-    "--muted-foreground": darkMode ? "35 12% 70%" : "30 5% 45%",
-    "--border": darkMode ? "30 7% 24%" : "34 26% 87%",
-    "--input": darkMode ? "30 7% 24%" : "34 26% 87%",
-    "--ring": accent,
+    "--background": formatHsl(darkMode ? darkBackground : background),
+    "--foreground": formatHsl(darkMode ? darkForeground : foreground),
+    "--card": formatHsl(darkMode ? darkCard : card),
+    "--card-foreground": formatHsl(darkMode ? darkForeground : foreground),
+    "--primary": formatHsl(primary),
+    "--primary-foreground": contrastText(primary),
+    "--accent": formatHsl(accent),
+    "--accent-foreground": contrastText(accent),
+    "--muted": formatHsl(darkMode ? darkMuted : { h: 33, s: 17, l: 90 }),
+    "--muted-foreground": formatHsl(darkMode ? darkMutedForeground : { h: 30, s: 5, l: 45 }),
+    "--border": formatHsl(darkMode ? darkBorder : { h: 34, s: 26, l: 87 }),
+    "--input": formatHsl(darkMode ? darkBorder : { h: 34, s: 26, l: 87 }),
+    "--ring": formatHsl(accent),
     "--destructive": "0 72% 45%",
     "--destructive-foreground": "0 0% 100%",
     "--radius": radius,
@@ -53,7 +53,13 @@ export function themeClassName(theme: ThemeLike) {
   return theme?.darkModeEnabled ? "dark" : undefined;
 }
 
-function hexToHsl(hex: string, fallback: string) {
+type Hsl = {
+  h: number;
+  s: number;
+  l: number;
+};
+
+function parseHexToHsl(hex: string, fallback: Hsl): Hsl {
   const normalized = hex.trim().replace("#", "");
   if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return fallback;
 
@@ -75,5 +81,29 @@ function hexToHsl(hex: string, fallback: string) {
     h /= 6;
   }
 
-  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+function darkSurface(color: Hsl, lightness: number): Hsl {
+  return {
+    h: color.h,
+    s: Math.min(Math.max(color.s, 6), 24),
+    l: lightness
+  };
+}
+
+function lightText(color: Hsl, lightness: number): Hsl {
+  return {
+    h: color.h,
+    s: Math.min(color.s, 24),
+    l: lightness
+  };
+}
+
+function contrastText(background: Hsl) {
+  return background.l >= 58 ? "30 8% 9%" : "37 33% 95%";
+}
+
+function formatHsl(color: Hsl) {
+  return `${color.h} ${color.s}% ${color.l}%`;
 }
