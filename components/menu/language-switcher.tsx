@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { locales, type Locale } from "@/lib/i18n/config";
 import { localeLabels } from "@/lib/i18n/config";
 import { Button } from "@/components/ui/button";
@@ -8,16 +8,19 @@ import { Button } from "@/components/ui/button";
 export function LanguageSwitcher({ locale }: { locale: Locale }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const queryString = searchParams.toString();
+  const suffix = queryString ? `?${queryString}` : "";
 
   function setLocale(nextLocale: Locale) {
     document.cookie = `menu_locale=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
     const parts = pathname.split("/");
     if (locales.includes(parts[1] as Locale)) {
       parts[1] = nextLocale;
-      router.push(parts.join("/"));
+      router.push(`${parts.join("/")}${suffix}`);
       return;
     }
-    router.push(`/${nextLocale}/menu`);
+    router.push(`/${nextLocale}/menu${suffix}`);
   }
 
   return (
