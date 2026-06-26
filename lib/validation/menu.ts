@@ -6,6 +6,16 @@ export const localizedTextSchema = z.object({
   es: z.string().trim().min(1)
 });
 
+const mediaUrlSchema = z
+  .string()
+  .trim()
+  .refine((value) => {
+    if (!value) return true;
+    if (value.startsWith("/")) return true;
+    return /^https?:\/\//i.test(value);
+  }, "Invalid url")
+  .default("");
+
 export const categorySchema = z.object({
   name: localizedTextSchema,
   description: z.object({
@@ -15,7 +25,7 @@ export const categorySchema = z.object({
   }),
   parentId: z.string().nullable().default(null),
   slug: z.string().trim().min(2),
-  imageUrl: z.string().url().or(z.literal("")).default(""),
+  imageUrl: mediaUrlSchema,
   sortOrder: z.coerce.number().int().default(0),
   isActive: z.coerce.boolean().default(true)
 });
@@ -28,7 +38,7 @@ export const menuSchema = z.object({
     es: z.string().trim().default("")
   }),
   slug: z.string().trim().min(2),
-  imageUrl: z.string().url().or(z.literal("")).default(""),
+  imageUrl: mediaUrlSchema,
   sortOrder: z.coerce.number().int().default(0),
   isActive: z.coerce.boolean().default(true)
 });
@@ -42,7 +52,7 @@ export const productSchema = z.object({
     en: z.string().trim().default(""),
     es: z.string().trim().default("")
   }),
-  imageUrl: z.string().url().or(z.literal("")).default(""),
+  imageUrl: mediaUrlSchema,
   price: z.coerce.number().positive(),
   calories: z.coerce.number().int().min(0).optional().nullable(),
   currency: z.string().default("TRY"),

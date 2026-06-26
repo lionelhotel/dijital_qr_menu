@@ -1,7 +1,5 @@
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
+import { open, readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { Readable } from "node:stream";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -29,27 +27,27 @@ export async function GET(
         return new NextResponse(null, {
           status: 416,
           headers: {
-            "Content-Range": `bytes */${fileStat.size}`,
-            "Accept-Ranges": "bytes"
+            "Accept-Ranges": "bytes",
+            "Content-Range": `bytes */${fileStat.size}`
           }
         });
       }
 
-      const stream = createReadStream(filePath, { start: partial.start, end: partial.end });
-      return new NextResponse(Readable.toWeb(stream) as BodyInit, {
+      const body = await readChunk(filePath, partial.start, partial.end);
+      return new NextResponse(body, {
         status: 206,
         headers: {
           "Accept-Ranges": "bytes",
           "Cache-Control": "public, max-age=31536000, immutable",
-          "Content-Length": String(partial.end - partial.start + 1),
+          "Content-Length": String(body.byteLength),
           "Content-Range": `bytes ${partial.start}-${partial.end}/${fileStat.size}`,
           "Content-Type": type
         }
       });
     }
 
-    const stream = createReadStream(filePath);
-    return new NextResponse(Readable.toWeb(stream) as BodyInit, {
+    const body = await readFile(filePath);
+    return new NextResponse(body, {
       headers: {
         "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=31536000, immutable",
@@ -59,6 +57,18 @@ export async function GET(
     });
   } catch {
     return NextResponse.json({ error: "Dosya bulunamadi." }, { status: 404 });
+  }
+}
+
+async function readChunk(filePath: string, start: number, end: number) {
+  const length = end - start + 1;
+  const file = await open(filePath, "r");
+  try {
+    const buffer = Buffer.alloc(length);
+    const result = await file.read(buffer, 0, length, start);
+    return result.bytesRead === length ? buffer : buffer.subarray(0, result.bytesRead);
+  } finally {
+    await file.close();
   }
 }
 
