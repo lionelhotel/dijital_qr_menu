@@ -30,6 +30,7 @@ export type ProductFormProduct = {
   translations: ProductTranslation[];
   menus: { menuId: string }[];
   allergens: { allergenId: string }[];
+  dietaryTags: { dietaryId: string }[];
 };
 
 type MediaItem = { id: string; url: string; originalName: string; category: { name: string } | null };
@@ -41,6 +42,7 @@ export function ProductForm({
   categories,
   menus,
   allergens,
+  dietaryTags,
   media,
   mediaCategories,
   variant = "edit"
@@ -50,6 +52,7 @@ export function ProductForm({
   categories: { id: string; translations: { locale: string; name: string }[] }[];
   menus: { id: string; translations: { locale: string; name: string }[] }[];
   allergens: { id: string; key: string; translations: { locale: string; name: string }[] }[];
+  dietaryTags: { id: string; key: string; icon: string; translations: { locale: string; name: string }[] }[];
   media: MediaItem[];
   mediaCategories: MediaCategory[];
   variant?: "create" | "edit";
@@ -59,6 +62,7 @@ export function ProductForm({
   const es = product?.translations.find((item) => item.locale === "es");
   const selectedMenus = new Set(product?.menus.map((item) => item.menuId));
   const selectedAllergens = new Set(product?.allergens.map((item) => item.allergenId));
+  const selectedDietaryTags = new Set(product?.dietaryTags.map((item) => item.dietaryId));
   const isCreate = variant === "create";
   const sectionSpacing = isCreate ? "mt-4 space-y-1" : "mt-4 space-y-3";
 
@@ -155,11 +159,26 @@ export function ProductForm({
         </fieldset>
       </ProductFormSection>
 
+      <ProductFormSection number={6} title="Menude gorunen etiketler">
+        <fieldset>
+          <legend className="text-xs text-muted-foreground">Bu secimler menude urun detaylarindaki Etiketler alaninda gorunur.</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {dietaryTags.map((tag) => (
+              <label key={tag.id} className="flex items-center gap-2 text-sm">
+                <input name="dietaryTagIds" value={tag.id} type="checkbox" defaultChecked={selectedDietaryTags.has(tag.id)} />
+                <span className="text-base leading-none">{tag.icon}</span>
+                {tag.translations.find((item) => item.locale === "tr")?.name ?? tag.key}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </ProductFormSection>
+
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
         <div className="grid flex-1 grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <label className="flex items-center gap-2"><input name="isActive" type="checkbox" defaultChecked={product?.isActive ?? true} /> Aktif</label>
           <label className="flex items-center gap-2"><input name="isAvailable" type="checkbox" defaultChecked={product?.isAvailable ?? true} /> Mevcut</label>
-          <label className="flex items-center gap-2"><input name="isFeatured" type="checkbox" defaultChecked={product?.isFeatured ?? false} /> Öne çıkan</label>
+          <label className="flex items-center gap-2"><input name="isFeatured" type="checkbox" defaultChecked={product?.isFeatured ?? false} /> Şefin önerisi rozeti</label>
           <label className="flex items-center gap-2"><input name="isNew" type="checkbox" defaultChecked={product?.isNew ?? false} /> Yeni</label>
         </div>
         <Button type="submit" className="min-w-28">Kaydet</Button>

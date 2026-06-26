@@ -155,6 +155,7 @@ export async function createProductAction(formData: FormData) {
   const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1200, height: 900 })) || parsed.imageUrl || undefined;
   const menuIds = readMany(formData, "menuIds");
   const allergenIds = await resolveAllergenIds(formData, parsed);
+  const dietaryTagIds = readMany(formData, "dietaryTagIds");
 
   const product = await prisma.product.create({
     data: {
@@ -172,6 +173,7 @@ export async function createProductAction(formData: FormData) {
       createdBy: user.id,
       translations: { create: productTranslations(parsed) },
       allergens: { create: allergenIds.map((allergenId) => ({ allergenId })) },
+      dietaryTags: { create: dietaryTagIds.map((dietaryId) => ({ dietaryId })) },
       menus: { create: menuIds.map((menuId) => ({ menuId })) }
     }
   });
@@ -187,9 +189,11 @@ export async function updateProductAction(formData: FormData) {
   const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1200, height: 900 })) || parsed.imageUrl || undefined;
   const menuIds = readMany(formData, "menuIds");
   const allergenIds = await resolveAllergenIds(formData, parsed);
+  const dietaryTagIds = readMany(formData, "dietaryTagIds");
 
   await prisma.$transaction([
     prisma.productAllergen.deleteMany({ where: { productId: id } }),
+    prisma.productDietaryTag.deleteMany({ where: { productId: id } }),
     prisma.productMenu.deleteMany({ where: { productId: id } }),
     prisma.product.update({
       where: { id },
@@ -208,6 +212,7 @@ export async function updateProductAction(formData: FormData) {
         updatedBy: user.id,
         translations: { upsert: productTranslationUpserts(id, parsed) },
         allergens: { create: allergenIds.map((allergenId) => ({ allergenId })) },
+        dietaryTags: { create: dietaryTagIds.map((dietaryId) => ({ dietaryId })) },
         menus: { create: menuIds.map((menuId) => ({ menuId })) }
       }
     })

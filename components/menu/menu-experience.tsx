@@ -126,7 +126,7 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
           <div className="absolute bottom-0 max-w-2xl p-4 sm:p-8">
             <Link
               href={backHref ?? `/${locale}/menu`}
-              className="mb-3 inline-flex items-center gap-2 rounded-md bg-card/95 px-3 py-2 text-sm font-medium text-primary"
+              className="mb-3 inline-flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-foreground shadow-lg transition hover:bg-accent/90"
             >
               <ChevronLeft className="h-4 w-4" />
               Menü
@@ -276,7 +276,7 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
             <div className="overflow-y-auto p-5">
               <div className="flex items-start justify-between gap-4">
                 <h2 className="font-serif text-3xl">{selected.name}</h2>
-                <p className="font-semibold text-accent">
+                <p className="text-2xl font-bold text-accent sm:text-3xl">
                   {formatPrice(selected.price, selected.currency, locale === "tr" ? "tr-TR" : locale)}
                 </p>
               </div>

@@ -177,7 +177,7 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
             {backHref ? (
               <Link
                 href={backHref}
-                className="mb-3 inline-flex items-center gap-2 rounded-md bg-card/95 px-3 py-2 text-sm font-medium text-primary"
+                className="mb-3 inline-flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-foreground shadow-lg transition hover:bg-accent/90"
               >
                 <ChevronLeft className="h-4 w-4" />
                 {backLabel}
@@ -221,7 +221,7 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
                     {category.productCount} ürün
                   </p>
                 </div>
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-white/20 bg-card/95 text-primary">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-accent/50 bg-accent text-accent-foreground shadow-lg transition group-hover:bg-accent/90">
                   <ChevronRight className="h-5 w-5" />
                 </span>
               </div>

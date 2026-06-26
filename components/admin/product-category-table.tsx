@@ -20,6 +20,7 @@ import { QuickPriceForm } from "@/components/admin/quick-price-form";
 type Translation = { locale: string; name: string; shortDescription?: string | null; ingredients?: string | null };
 type LookupItem = { id: string; translations: { locale: string; name: string }[] };
 type AllergenItem = { id: string; key: string; translations: { locale: string; name: string }[] };
+type DietaryTagItem = { id: string; key: string; icon: string; translations: { locale: string; name: string }[] };
 type MediaItem = { id: string; url: string; originalName: string; category: { name: string } | null };
 type MediaCategory = { id: string; name: string };
 
@@ -39,6 +40,7 @@ export function ProductCategoryTable({
   categories,
   menus,
   allergens,
+  dietaryTags,
   media,
   mediaCategories
 }: {
@@ -46,6 +48,7 @@ export function ProductCategoryTable({
   categories: LookupItem[];
   menus: LookupItem[];
   allergens: AllergenItem[];
+  dietaryTags: DietaryTagItem[];
   media: MediaItem[];
   mediaCategories: MediaCategory[];
 }) {
@@ -209,7 +212,7 @@ export function ProductCategoryTable({
       </div>
 
       {viewProduct ? (
-        <ProductViewModal product={viewProduct} menus={menus} allergens={allergens} onClose={() => setViewProduct(null)} />
+        <ProductViewModal product={viewProduct} menus={menus} allergens={allergens} dietaryTags={dietaryTags} onClose={() => setViewProduct(null)} />
       ) : null}
 
       {editProduct ? (
@@ -233,6 +236,7 @@ export function ProductCategoryTable({
               categories={categories}
               menus={menus}
               allergens={allergens}
+              dietaryTags={dietaryTags}
               media={media}
               mediaCategories={mediaCategories}
             />
@@ -247,11 +251,13 @@ function ProductViewModal({
   product,
   menus,
   allergens,
+  dietaryTags,
   onClose
 }: {
   product: ProductTableRow;
   menus: LookupItem[];
   allergens: AllergenItem[];
+  dietaryTags: DietaryTagItem[];
   onClose: () => void;
 }) {
   const tr = product.translations.find((item) => item.locale === "tr");
@@ -260,6 +266,9 @@ function ProductViewModal({
     .filter(Boolean);
   const selectedAllergenNames = product.allergens
     .map((relation) => allergens.find((allergen) => allergen.id === relation.allergenId)?.translations.find((item) => item.locale === "tr")?.name)
+    .filter(Boolean);
+  const selectedDietaryTagNames = product.dietaryTags
+    .map((relation) => dietaryTags.find((tag) => tag.id === relation.dietaryId)?.translations.find((item) => item.locale === "tr")?.name)
     .filter(Boolean);
   const energy = product.calories ? Math.round(product.calories * 4.184) : null;
 
@@ -285,7 +294,7 @@ function ProductViewModal({
             <Info label="Kalori / enerji" value={product.calories ? `${product.calories} kcal${energy ? ` / ${energy} kJ` : ""}` : "-"} />
             <Info label="Süre" value={product.prepMinutes ? `${product.prepMinutes} dk` : "-"} />
             <Info label="Acılı" value={product.spicyLevel > 0 ? "Acılı" : "Acısız"} />
-            <Info label="Etiketler" value={[product.isActive ? "Aktif" : "Pasif", product.isFeatured ? "Öne çıkan" : "", product.isNew ? "Yeni" : ""].filter(Boolean).join(", ") || "-"} />
+            <Info label="Durum etiketleri" value={[product.isActive ? "Aktif" : "Pasif", product.isFeatured ? "Şefin önerisi rozeti" : "", product.isNew ? "Yeni" : ""].filter(Boolean).join(", ") || "-"} />
           </div>
         </div>
         <div className="mt-4 space-y-3 text-sm">
@@ -293,6 +302,7 @@ function ProductViewModal({
           <Info label="İçerik" value={tr?.ingredients || "-"} block />
           <Info label="Menüler" value={selectedMenuNames.join(", ") || "-"} block />
           <Info label="Alerjenler" value={selectedAllergenNames.join(", ") || "-"} block />
+          <Info label="Menüde görünen etiketler" value={selectedDietaryTagNames.join(", ") || "-"} block />
         </div>
       </Card>
     </div>

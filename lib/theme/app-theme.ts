@@ -14,18 +14,24 @@ type ThemeStyle = CSSProperties & Record<`--${string}`, string>;
 
 export function createThemeStyle(theme: ThemeLike): ThemeStyle {
   const darkMode = theme?.darkModeEnabled ?? false;
+  const backgroundHex = theme?.backgroundColor ?? "#F7F4EE";
+  const cardHex = theme?.cardColor ?? "#FFFFFF";
+  const textHex = theme?.textColor ?? "#2B2926";
   const primary = hexToHsl(theme?.primaryColor ?? "#2B2926", "30 6% 16%");
   const accent = hexToHsl(theme?.accentColor ?? "#A8844F", "36 36% 48%");
-  const background = hexToHsl(theme?.backgroundColor ?? "#F7F4EE", "37 33% 95%");
-  const card = hexToHsl(theme?.cardColor ?? "#FFFFFF", "0 0% 100%");
-  const foreground = hexToHsl(theme?.textColor ?? "#2B2926", "30 6% 16%");
+  const background = hexToHsl(backgroundHex, "37 33% 95%");
+  const card = hexToHsl(cardHex, "0 0% 100%");
+  const foreground = hexToHsl(textHex, "30 6% 16%");
   const radius = Number.isFinite(theme?.radius) ? `${theme?.radius}px` : "8px";
+  const customBackground = Boolean(theme?.backgroundColor && theme.backgroundColor !== "#F7F4EE");
+  const customCard = Boolean(theme?.cardColor && theme.cardColor !== "#FFFFFF");
+  const customText = Boolean(theme?.textColor && theme.textColor !== "#2B2926");
 
   return {
-    "--background": darkMode ? "30 8% 9%" : background,
-    "--foreground": darkMode ? "37 33% 95%" : foreground,
-    "--card": darkMode ? "30 8% 13%" : card,
-    "--card-foreground": darkMode ? "37 33% 95%" : foreground,
+    "--background": darkMode && !customBackground ? "30 8% 9%" : background,
+    "--foreground": darkMode && !customText ? "37 33% 95%" : foreground,
+    "--card": darkMode && !customCard ? "30 8% 13%" : card,
+    "--card-foreground": darkMode && !customText ? "37 33% 95%" : foreground,
     "--primary": primary,
     "--primary-foreground": "37 33% 95%",
     "--accent": accent,

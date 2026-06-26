@@ -32,7 +32,7 @@ export default async function ProductsPage({
       : {})
   };
 
-  const [categories, products, menus, allergens, media, mediaCategories] = await Promise.all([
+  const [categories, products, menus, allergens, dietaryTags, media, mediaCategories] = await Promise.all([
     prisma.category.findMany({ where: { deletedAt: null }, orderBy: { sortOrder: "asc" }, include: { translations: true } }),
     prisma.product.findMany({
       where: productWhere,
@@ -41,11 +41,13 @@ export default async function ProductsPage({
         translations: true,
         category: { include: { translations: true } },
         menus: true,
-        allergens: true
+        allergens: true,
+        dietaryTags: true
       }
     }),
     prisma.menu.findMany({ where: { deletedAt: null }, orderBy: { sortOrder: "asc" }, include: { translations: true } }),
     prisma.allergen.findMany({ where: { deletedAt: null }, orderBy: { key: "asc" }, include: { translations: true } }),
+    prisma.dietaryTag.findMany({ where: { deletedAt: null }, orderBy: { key: "asc" }, include: { translations: true } }),
     prisma.media.findMany({ where: { deletedAt: null, isActive: true }, orderBy: { createdAt: "desc" }, include: { category: true }, take: 200 }),
     prisma.mediaCategory.findMany({ where: { deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] })
   ]);
@@ -66,7 +68,8 @@ export default async function ProductsPage({
     isNew: product.isNew,
     translations: product.translations,
     menus: product.menus.map((item) => ({ menuId: item.menuId })),
-    allergens: product.allergens.map((item) => ({ allergenId: item.allergenId }))
+    allergens: product.allergens.map((item) => ({ allergenId: item.allergenId })),
+    dietaryTags: product.dietaryTags.map((item) => ({ dietaryId: item.dietaryId }))
   }));
 
   const groups: ProductCategoryGroup[] = categories
@@ -89,6 +92,7 @@ export default async function ProductsPage({
             categories={categories}
             menus={menus}
             allergens={allergens}
+            dietaryTags={dietaryTags}
             media={media}
             mediaCategories={mediaCategories}
             variant="create"
@@ -152,6 +156,7 @@ export default async function ProductsPage({
             categories={categories}
             menus={menus}
             allergens={allergens}
+            dietaryTags={dietaryTags}
             media={media}
             mediaCategories={mediaCategories}
           />
