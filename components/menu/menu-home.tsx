@@ -137,24 +137,15 @@ export function MenuHome({ locale, basePath, backHref, backLabel = "Başa dön",
 
   return (
     <main className="menu-horizon-shell min-h-screen bg-[#0e0e0e] text-[#e4e2e1]">
-      <header className="fixed left-0 top-0 z-40 w-full border-b border-white/5 bg-[#0e0e0e]/50 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5">
-          <Link href={`/${locale}/menu`} className="flex min-w-0 flex-1 items-center gap-3">
-            {business.logoUrl ? (
-              <span className="relative h-10 w-10 shrink-0 overflow-hidden border border-[#d4af37]/35 bg-black/40">
-                <Image src={business.logoUrl} alt={business.businessName} fill className="object-contain p-1" />
-              </span>
-            ) : (
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#d4af37]/35 bg-black/40 text-[#f2ca50]">
-                <Utensils className="h-5 w-5" />
-              </span>
-            )}
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-semibold uppercase text-[#f2ca50]">{business.businessName}</span>
-              <span className="block truncate text-[11px] text-[#d0c5af]/70">{business.venueName}</span>
+      <header className="fixed left-0 top-0 z-40 w-full border-b border-white/5 bg-[#0e0e0e]/48 backdrop-blur-sm">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
+          <Link href={`/${locale}/menu`} className="flex min-w-0 flex-1 items-center gap-3 text-[#f2ca50]">
+            <Utensils className="h-7 w-7 shrink-0 stroke-[2.4]" />
+            <span className="min-w-0 truncate text-sm font-semibold uppercase tracking-[0.42em] sm:text-base">
+              {business.businessName}
             </span>
           </Link>
-          <LanguageSwitcher locale={locale} />
+          <LanguageSwitcher locale={locale} variant="horizon" />
         </div>
       </header>
 

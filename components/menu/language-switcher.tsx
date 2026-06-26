@@ -5,7 +5,7 @@ import { locales, type Locale } from "@/lib/i18n/config";
 import { localeLabels } from "@/lib/i18n/config";
 import { Button } from "@/components/ui/button";
 
-export function LanguageSwitcher({ locale }: { locale: Locale }) {
+export function LanguageSwitcher({ locale, variant = "default" }: { locale: Locale; variant?: "default" | "horizon" }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -21,6 +21,25 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
       return;
     }
     router.push(`/${nextLocale}/menu${suffix}`);
+  }
+
+  if (variant === "horizon") {
+    return (
+      <div className="flex items-center gap-5 text-[#f2ca50]" aria-label="Language">
+        {locales.map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={`text-2xl font-bold uppercase leading-none transition hover:opacity-100 ${
+              item === locale ? "opacity-100" : "opacity-40"
+            }`}
+            onClick={() => setLocale(item)}
+          >
+            {localeLabels[item]}
+          </button>
+        ))}
+      </div>
+    );
   }
 
   return (
