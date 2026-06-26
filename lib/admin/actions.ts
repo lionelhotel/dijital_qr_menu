@@ -35,8 +35,9 @@ export async function createMenuAction(formData: FormData) {
   const user = await requireAdmin();
   const parsed = menuSchema.parse(readMenuForm(formData));
   const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1400, height: 520 })) || parsed.imageUrl || undefined;
-  if (!(await ensureMenuSlugAvailable(parsed.slug))) {
-    await setAdminFlash("error", "Bu URL slug başka bir menüde kullanılıyor. Lütfen farklı bir slug girin.");
+  const uniqueCheck = await ensureMenuUniqueSlugs(parsed);
+  if (!uniqueCheck.ok) {
+    await setAdminFlash("error", uniqueCheck.message);
     revalidatePath("/admin/menus");
     return { ok: false as const };
   }
@@ -68,8 +69,9 @@ export async function updateMenuAction(formData: FormData) {
   const id = requiredId(formData);
   const parsed = menuSchema.parse(readMenuForm(formData));
   const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1400, height: 520 })) || parsed.imageUrl || undefined;
-  if (!(await ensureMenuSlugAvailable(parsed.slug, id))) {
-    await setAdminFlash("error", "Bu URL slug başka bir menüde kullanılıyor. Lütfen farklı bir slug girin.");
+  const uniqueCheck = await ensureMenuUniqueSlugs(parsed, id);
+  if (!uniqueCheck.ok) {
+    await setAdminFlash("error", uniqueCheck.message);
     revalidatePath("/admin/menus");
     return { ok: false as const };
   }
@@ -769,12 +771,54 @@ function readMany(formData: FormData, key: string) {
   return formData.getAll(key).map(String).filter(Boolean);
 }
 
-async function ensureMenuSlugAvailable(slug: string, currentId?: string) {
+async function ensureMenuUniqueSlugs(parsed: { slug: string; name: Record<(typeof locales)[number], string> }, currentId?: string) {
   const existing = await prisma.menu.findUnique({
-    where: { slug },
-    select: { id: true }
+    where: { slug: parsed.slug },
+    select: { id: true, deletedAt: true }
   });
-  return !existing || existing.id === currentId;
+
+  if (existing && existing.id !== currentId) {
+    if (!existing.deletedAt) {
+      return { ok: false as const, message: "Bu URL slug aktif başka bir menüde kullanılıyor. Lütfen farklı bir slug girin." };
+    }
+    await prisma.menu.update({
+      where: { id: existing.id },
+      data: { slug: archivedSlug(parsed.slug) }
+    });
+  }
+
+  for (const locale of locales) {
+    const translationSlug = slugify(parsed.name[locale]);
+    const translation = await prisma.menuTranslation.findFirst({
+      where: {
+        locale,
+        slug: translationSlug,
+        ...(currentId ? { menuId: { not: currentId } } : {})
+      },
+      select: {
+        id: true,
+        menu: { select: { deletedAt: true } }
+      }
+    });
+
+    if (!translation) continue;
+    if (!translation.menu.deletedAt) {
+      return {
+        ok: false as const,
+        message: "Bu menü adı aktif başka bir menüde kullanılıyor. Lütfen menü adını veya dil alanını değiştirin."
+      };
+    }
+    await prisma.menuTranslation.update({
+      where: { id: translation.id },
+      data: { slug: archivedSlug(translationSlug) }
+    });
+  }
+
+  return { ok: true as const };
+}
+
+function archivedSlug(slug: string) {
+  return `${slug}-arsiv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 async function hasChefDietaryTag(dietaryTagIds: string[]) {
