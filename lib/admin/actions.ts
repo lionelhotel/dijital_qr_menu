@@ -376,6 +376,10 @@ export async function deleteDietaryTagAction(formData: FormData) {
 }
 
 export async function updateSettingsAction(formData: FormData) {
+  await saveSettings(formData);
+}
+
+export async function saveSettings(formData: FormData) {
   const user = await requireAdmin();
   const businessId = String(formData.get("businessId") || "default-business");
   const themeId = String(formData.get("themeId") || "default-theme");

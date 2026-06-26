@@ -1,8 +1,8 @@
-import { updateSettingsAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { MediaPickerField } from "@/components/admin/media-picker-field";
+import { SettingsForm } from "@/components/admin/settings-form";
 import { LabeledField } from "@/components/forms/labeled-field";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,7 +23,7 @@ export default async function SettingsPage() {
   return (
     <AdminShell>
       <h1 className="font-serif text-3xl">İşletme ve Tema Ayarları</h1>
-      <form action={updateSettingsAction} className="mt-6 grid gap-6 lg:grid-cols-2">
+      <SettingsForm>
         <input type="hidden" name="businessId" value={business?.id ?? "default-business"} />
         <input type="hidden" name="themeId" value={theme?.id ?? "default-theme"} />
         <Card className="p-4">
@@ -127,7 +127,7 @@ export default async function SettingsPage() {
           </label>
           <Button type="submit" className="mt-5">Ayarları kaydet</Button>
         </Card>
-      </form>
+      </SettingsForm>
     </AdminShell>
   );
 }

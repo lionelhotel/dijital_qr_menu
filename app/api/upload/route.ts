@@ -5,6 +5,8 @@ import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { storeUploadedMedia } from "@/lib/uploads/images";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   const user = await requireAdmin();
   try {
@@ -12,7 +14,7 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "Dosya bulunamadı." }, { status: 400 });
+      return NextResponse.json({ error: "Dosya bulunamadi." }, { status: 400 });
     }
 
     const width = Number(formData.get("width") || 1600);
@@ -47,6 +49,8 @@ export async function POST(request: Request) {
     return NextResponse.json(media);
   } catch (error) {
     console.error("API media upload failed", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Görsel yüklenemedi." }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Medya yuklenemedi.";
+    const status = /MB|sinir|sınır/i.test(message) ? 413 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

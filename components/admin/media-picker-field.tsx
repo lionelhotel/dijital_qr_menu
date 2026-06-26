@@ -31,7 +31,7 @@ export function MediaPickerField({
   defaultValue,
   media,
   categories = [],
-  label = "Medya arşivinden seç",
+  label = "Medya arsivinden sec",
   targetWidth = 1600,
   targetHeight
 }: {
@@ -47,6 +47,7 @@ export function MediaPickerField({
   const [items, setItems] = useState(media);
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [categoryId, setCategoryId] = useState("");
   const [libraryCategoryId, setLibraryCategoryId] = useState("");
   const [tagQuery, setTagQuery] = useState("");
@@ -68,17 +69,18 @@ export function MediaPickerField({
     if (!selected.length) return;
 
     setUploading(true);
+    setUploadProgress(0);
     try {
       const uploaded: MediaItem[] = [];
-      for (const file of selected) {
+      for (const [index, file] of selected.entries()) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("categoryId", categoryId);
         formData.append("width", width || String(targetWidth));
         formData.append("height", height);
-        const response = await fetch("/api/upload", { method: "POST", body: formData });
-        const data = (await response.json()) as MediaItem & { error?: string };
-        if (!response.ok) throw new Error(data.error || "Görsel yüklenemedi.");
+        const data = await uploadWithProgress(formData, (percent) => {
+          setUploadProgress(Math.round(((index + percent / 100) / selected.length) * 100));
+        });
         uploaded.push({
           ...data,
           categoryId,
@@ -87,11 +89,12 @@ export function MediaPickerField({
       }
       setItems((current) => [...uploaded, ...current]);
       if (uploaded[0]) setValue(uploaded[0].url);
-      showFlash("success", `${uploaded.length} görsel medya arşivine yüklendi.`);
+      showFlash("success", `${uploaded.length} medya arsivine yuklendi.`);
     } catch (error) {
-      showFlash("error", error instanceof Error ? error.message : "Görsel yüklenirken hata oluştu.");
+      showFlash("error", error instanceof Error ? error.message : "Medya yuklenirken hata olustu.");
     } finally {
       setUploading(false);
+      setUploadProgress(0);
       if (fileRef.current) fileRef.current.value = "";
     }
   }
@@ -102,7 +105,7 @@ export function MediaPickerField({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group relative block aspect-video w-full max-w-xl overflow-hidden rounded-lg border border-border bg-muted text-left"
+        className="group relative block aspect-video w-full max-w-sm overflow-hidden rounded-lg border border-border bg-muted text-left"
       >
         {value ? (
           selectedIsVideo ? (
@@ -120,12 +123,12 @@ export function MediaPickerField({
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" onClick={() => setOpen(true)}>
           <ImageIcon className="h-4 w-4" />
-          Medya arşivi
+          Medya arsivi
         </Button>
         {value ? (
           <Button type="button" variant="outline" onClick={() => setValue("")}>
             <Trash2 className="h-4 w-4" />
-            Görseli temizle
+            Gorseli temizle
           </Button>
         ) : null}
       </div>
@@ -156,7 +159,7 @@ export function MediaPickerField({
                     onClick={() => fileRef.current?.click()}
                   >
                     <Upload className="h-4 w-4" />
-                    Görsel seç veya buraya bırak
+                    Medya sec veya buraya birak
                   </button>
                   <LabeledField label="Kategori">
                     <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm">
@@ -166,18 +169,19 @@ export function MediaPickerField({
                       ))}
                     </select>
                   </LabeledField>
-                  <LabeledField label="Genişlik">
+                  <LabeledField label="Genislik">
                     <Input value={width} onChange={(event) => setWidth(event.target.value)} type="number" min={320} />
                   </LabeledField>
-                  <LabeledField label="Yükseklik">
+                  <LabeledField label="Yukseklik">
                     <Input value={height} onChange={(event) => setHeight(event.target.value)} type="number" min={0} />
                   </LabeledField>
                   <div className="flex items-end">
                     <Button type="button" disabled={uploading} onClick={() => fileRef.current?.click()}>
-                      {uploading ? "Yükleniyor" : "Yükle"}
+                      {uploading ? `Yukleniyor %${uploadProgress}` : "Yukle"}
                     </Button>
                   </div>
                 </div>
+                {uploading ? <ProgressBar value={uploadProgress} /> : null}
                 <input
                   ref={fileRef}
                   type="file"
@@ -197,14 +201,14 @@ export function MediaPickerField({
                     onChange={(event) => setLibraryCategoryId(event.target.value)}
                     className="h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
                   >
-                    <option value="">Tümü</option>
+                    <option value="">Tumu</option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>{category.name}</option>
                     ))}
                   </select>
                 </LabeledField>
                 <LabeledField label="Etiket ara">
-                  <Input value={tagQuery} onChange={(event) => setTagQuery(event.target.value)} placeholder="Etikete göre ara" />
+                  <Input value={tagQuery} onChange={(event) => setTagQuery(event.target.value)} placeholder="Etikete gore ara" />
                 </LabeledField>
               </div>
             </div>
@@ -235,7 +239,7 @@ export function MediaPickerField({
                 ))
               ) : (
                 <div className="rounded-lg border border-border bg-muted p-6 text-sm text-muted-foreground sm:col-span-2 lg:col-span-4">
-                  Bu filtrelere uygun görsel bulunamadı.
+                  Bu filtrelere uygun medya bulunamadi.
                 </div>
               )}
             </div>
@@ -249,6 +253,48 @@ export function MediaPickerField({
 function isVideoMedia(item?: MediaItem) {
   if (!item) return false;
   return item.kind === "VIDEO" || /\.(mp4|webm|mov)$/i.test(item.url);
+}
+
+function uploadWithProgress(formData: FormData, onProgress: (percent: number) => void) {
+  return new Promise<MediaItem>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", "/api/upload");
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      }
+    };
+    request.onload = () => {
+      let data: (MediaItem & { error?: string }) | { error?: string } = {};
+      try {
+        data = JSON.parse(request.responseText || "{}") as MediaItem & { error?: string };
+      } catch {
+        data = {};
+      }
+      if (request.status >= 200 && request.status < 300 && "url" in data) {
+        onProgress(100);
+        resolve(data);
+        return;
+      }
+      reject(new Error(data.error || "Medya yuklenemedi."));
+    };
+    request.onerror = () => reject(new Error("Medya yuklenemedi."));
+    request.send(formData);
+  });
+}
+
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="mt-3">
+      <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+        <span>Yukleniyor</span>
+        <span>%{value}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-background">
+        <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
 }
 
 function showFlash(type: "success" | "error" | "info", message: string) {
