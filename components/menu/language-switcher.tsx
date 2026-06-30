@@ -5,7 +5,7 @@ import { locales, type Locale } from "@/lib/i18n/config";
 import { localeLabels } from "@/lib/i18n/config";
 import { Button } from "@/components/ui/button";
 
-export function LanguageSwitcher({ locale, variant = "default" }: { locale: Locale; variant?: "default" | "horizon" }) {
+export function LanguageSwitcher({ locale, variant = "default" }: { locale: Locale; variant?: "default" | "horizon" | "visualFocus" }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -32,6 +32,27 @@ export function LanguageSwitcher({ locale, variant = "default" }: { locale: Loca
             type="button"
             className={`text-2xl font-bold uppercase leading-none transition hover:opacity-100 ${
               item === locale ? "opacity-100" : "opacity-40"
+            }`}
+            onClick={() => setLocale(item)}
+          >
+            {localeLabels[item]}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  if (variant === "visualFocus") {
+    return (
+      <div className="flex items-center gap-5 text-[#d0c5af]" aria-label="Language">
+        {locales.map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={`min-w-12 rounded px-3 py-2 text-base font-bold uppercase leading-none transition ${
+              item === locale
+                ? "border border-[#d4af37]/45 text-[#f2ca50] shadow-[0_0_18px_rgba(212,175,55,0.10)]"
+                : "text-[#d0c5af]/70 hover:text-[#f2ca50]"
             }`}
             onClick={() => setLocale(item)}
           >
