@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { BadgeCheck, ChevronLeft, Clock, Flame, Leaf, Search, Star, WheatOff, X } from "lucide-react";
+import { BadgeCheck, ChevronLeft, Clock, Flame, Leaf, Search, Star, Utensils, WheatOff, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { t } from "@/lib/i18n/dictionaries";
@@ -89,23 +89,15 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#131313] pb-28 text-[#e4e2e1]">
-      <header className="fixed left-0 top-0 z-50 w-full border-b border-[#d4af37]/30 bg-[#131313]/88 backdrop-blur-md">
+      <header className="fixed left-0 top-0 z-50 w-full border-b border-white/5 bg-[#0e0e0e]/88 backdrop-blur-sm">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-5 px-6">
           <Link href={`/${locale}/menu`} className="flex min-w-0 flex-1 items-center gap-3 text-[#f2ca50]">
-            {business.logoUrl ? (
-              <span className="relative h-10 w-10 shrink-0 overflow-hidden border border-[#d4af37]/35 bg-black/40">
-                <Image src={business.logoUrl} alt={business.businessName} fill className="object-contain p-1" />
-              </span>
-            ) : (
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#d4af37]/35 bg-black/40 text-sm font-semibold">
-                LH
-              </span>
-            )}
-            <span className="min-w-0 truncate font-serif text-2xl font-bold leading-none tracking-tight sm:text-3xl">
+            <Utensils className="h-8 w-8 shrink-0 stroke-[2.4]" />
+            <span className="min-w-0 truncate text-sm font-semibold uppercase tracking-[0.42em] sm:text-base">
               {menuTitle ?? business.businessName}
             </span>
           </Link>
-          <LanguageSwitcher locale={locale} variant="visualFocus" />
+          <LanguageSwitcher locale={locale} variant="horizon" />
         </div>
       </header>
 
