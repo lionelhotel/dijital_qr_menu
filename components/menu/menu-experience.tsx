@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Search, X, Flame, Leaf, WheatOff, Star, BadgeCheck, ChevronLeft, Clock } from "lucide-react";
+import { BadgeCheck, ChevronLeft, Clock, Flame, Leaf, Search, Star, WheatOff, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { t } from "@/lib/i18n/dictionaries";
@@ -88,11 +88,11 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
   }
 
   return (
-    <main className="min-h-screen pb-24">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+    <main className="min-h-screen overflow-x-hidden bg-[#131313] pb-28 text-[#e4e2e1]">
+      <header className="fixed left-0 top-0 z-50 w-full border-b border-[#d4af37]/30 bg-[#131313]/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-6 py-4">
           <Link href={`/${locale}/menu`} className="flex min-w-0 flex-1 items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-semibold text-primary-foreground">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded border border-[#d4af37]/30 bg-[#1f2020] text-lg font-semibold text-[#f2ca50]">
               {business.logoUrl ? (
                 <Image src={business.logoUrl} alt={business.businessName} width={36} height={36} className="h-9 w-9 object-contain" />
               ) : (
@@ -100,16 +100,16 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
               )}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">{business.businessName}</span>
-              <span className="block truncate text-xs text-muted-foreground">{business.venueName}</span>
+              <span className="block truncate font-serif text-xl font-semibold leading-tight text-[#f2ca50]">{business.businessName}</span>
+              <span className="block truncate text-xs text-[#d0c5af]/72">{business.venueName}</span>
             </span>
           </Link>
           <LanguageSwitcher locale={locale} />
         </div>
       </header>
 
-      <section className="relative mx-auto max-w-6xl px-4 pt-4 sm:pt-6">
-        <div className="relative min-h-[190px] overflow-hidden rounded-lg bg-primary text-primary-foreground sm:min-h-[280px]">
+      <section className="relative h-[397px] w-full overflow-hidden pt-20">
+        <div className="absolute inset-0 top-20">
           <Image
             src={
               menuImageUrl ??
@@ -119,125 +119,90 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
             alt={menuTitle ?? business.venueName}
             fill
             priority
-            className="object-cover opacity-65"
-            sizes="(max-width: 768px) 100vw, 1100px"
+            className="object-cover"
+            sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/45 to-transparent" />
-          <div className="absolute bottom-0 max-w-2xl p-4 sm:p-8">
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,#131313_0%,rgba(19,19,19,0.62)_42%,rgba(19,19,19,0.08)_100%)]" />
+          <div className="absolute bottom-8 left-0 w-full px-6 pb-8">
             <Link
               href={backHref ?? `/${locale}/menu`}
-              className="mb-3 inline-flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-foreground shadow-lg transition hover:bg-accent/90"
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#d4af37]/35 bg-[#1f2020]/85 px-4 py-2 text-sm font-medium text-[#f2ca50] shadow-xl backdrop-blur transition hover:bg-[#d4af37] hover:text-[#241a00]"
             >
               <ChevronLeft className="h-4 w-4" />
               Menü
             </Link>
-            <h1 className="font-serif text-3xl leading-tight sm:text-5xl">{menuTitle ?? business.businessName}</h1>
-            <p className="mt-1 text-base text-primary-foreground/90 sm:mt-2 sm:text-lg">{business.venueName}</p>
-            <p className="mt-3 max-w-xl text-sm text-primary-foreground/90 sm:mt-5 sm:text-base">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#f2ca50]">{menuTitle ?? business.businessName}</span>
+            </div>
+            <h1 className="font-serif text-3xl font-semibold leading-tight text-[#ffe088] sm:text-5xl">Gourmet Deneyimi</h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#d0c5af]/82 sm:text-base">
               {menuDescription || t(locale, "welcomeSub")}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="sticky top-[69px] z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:hidden">
+      <section className="relative z-20 -mt-8 px-6 py-3 sm:hidden">
         <div className="space-y-3">
-          <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t(locale, "search")}
-              className="h-11 pl-10"
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {quickFilters.map(({ key, label, icon: Icon }) => (
-              <Button
-                key={key}
-                type="button"
-                variant={filters.includes(key) ? "accent" : "outline"}
-                onClick={() => toggleFilter(key)}
-                className="h-9 justify-start px-3"
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{label}</span>
-              </Button>
-            ))}
-          </div>
+          <SearchField locale={locale} query={query} setQuery={setQuery} />
+          <FilterGrid filters={filters} toggleFilter={toggleFilter} />
         </div>
       </section>
 
-      <section className="mx-auto hidden max-w-6xl px-4 py-5 sm:block">
+      <section className="relative z-20 mx-auto -mt-8 hidden max-w-6xl px-6 py-5 sm:block">
         <div className="flex flex-col gap-3 sm:flex-row">
-          <label className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t(locale, "search")}
-              className="pl-10"
-            />
-          </label>
+          <SearchField locale={locale} query={query} setQuery={setQuery} />
           <div className="flex gap-2 overflow-x-auto">
             {quickFilters.map(({ key, label, icon: Icon }) => (
-              <Button
-                key={key}
-                type="button"
-                variant={filters.includes(key) ? "accent" : "outline"}
-                onClick={() => toggleFilter(key)}
-                className="shrink-0"
-              >
+              <FilterButton key={key} active={filters.includes(key)} onClick={() => toggleFilter(key)}>
                 <Icon className="h-4 w-4" />
                 {label}
-              </Button>
+              </FilterButton>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-2 sm:gap-4 sm:py-0 lg:grid-cols-3">
+      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-6 py-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
         {filteredProducts.map((product) => (
           <button
             key={product.id}
             type="button"
             onClick={() => setSelected(product)}
-            className="group flex overflow-hidden rounded-lg border border-border bg-card text-left shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg sm:block"
+            className="group flex flex-col overflow-hidden rounded-xl border border-[#d4af37]/15 bg-[#1f2020] text-left transition duration-300 hover:-translate-y-0.5 hover:border-[#d4af37]/40"
           >
-            <div className="relative h-28 w-28 shrink-0 bg-muted sm:h-auto sm:w-full sm:aspect-[4/3]">
+            <div className="relative h-64 w-full overflow-hidden bg-[#353535]">
               <Image
                 src={product.mainImageUrl ?? "/placeholders/food.svg"}
                 alt={product.name}
                 fill
                 loading="lazy"
-                className="object-cover transition group-hover:scale-105"
+                className="object-cover transition duration-700 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, 33vw"
               />
-              <div className="absolute left-2 top-2 hidden flex-wrap gap-2 sm:flex sm:left-3 sm:top-3">
+              <div className="absolute left-3 top-3 flex flex-wrap gap-2">
                 {product.isFeatured ? <Badge>{t(locale, "featured")}</Badge> : null}
                 {product.isNew ? <Badge>{t(locale, "new")}</Badge> : null}
                 {!product.isAvailable ? <Badge>{t(locale, "unavailable")}</Badge> : null}
               </div>
             </div>
-            <div className="min-w-0 flex-1 space-y-2 p-3 sm:space-y-3 sm:p-4">
+            <div className="min-w-0 flex-1 space-y-2 p-4">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="line-clamp-2 font-serif text-base leading-tight sm:text-xl">{product.name}</h2>
-                <p className="shrink-0 text-sm font-semibold text-accent sm:text-base">
+                <h2 className="line-clamp-2 font-serif text-2xl font-medium leading-tight text-[#d4af37]">{product.name}</h2>
+                <p className="shrink-0 font-serif text-2xl font-semibold leading-tight text-[#f2ca50]">
                   {formatPrice(product.price, product.currency, locale === "tr" ? "tr-TR" : locale)}
                 </p>
               </div>
-              <p className="line-clamp-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">{product.shortDescription}</p>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {product.isFeatured ? <MobileBadge>{t(locale, "featured")}</MobileBadge> : null}
-                {product.isNew ? <MobileBadge>{t(locale, "new")}</MobileBadge> : null}
+              <p className="line-clamp-2 text-sm leading-6 text-[#d0c5af]/70">{product.shortDescription}</p>
+              <div className="flex flex-wrap gap-2 pt-1">
                 {product.spicyLevel > 0 ? (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs">
+                  <span className="inline-flex items-center gap-1 rounded border border-[#99907c]/30 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#d0c5af]">
                     <Flame className="h-3 w-3 text-destructive" />
                     {spicyText(locale)}
                   </span>
                 ) : null}
-                {product.dietaryTags.slice(0, 3).map((tag) => (
-                  <span key={tag.key} className="rounded-md bg-muted px-2 py-1 text-xs">
+                {visibleDietaryTags(product).slice(0, 3).map((tag) => (
+                  <span key={tag.key} className="rounded border border-[#99907c]/30 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#d0c5af]">
                     {tag.name}
                   </span>
                 ))}
@@ -248,13 +213,13 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
       </section>
 
       {filteredProducts.length === 0 ? (
-        <p className="mx-auto mt-12 max-w-6xl px-4 text-center text-muted-foreground">{t(locale, "noResults")}</p>
+        <p className="mx-auto mt-12 max-w-6xl px-6 text-center text-[#d0c5af]/70">{t(locale, "noResults")}</p>
       ) : null}
 
       {selected ? (
-        <div className="fixed inset-0 z-50 bg-primary/60 p-3 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="safe-bottom mx-auto flex max-h-[94vh] max-w-2xl flex-col overflow-hidden rounded-lg bg-card shadow-2xl">
-            <div className="relative aspect-[16/10] bg-muted">
+        <div className="fixed inset-0 z-50 bg-black/70 p-3 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="safe-bottom mx-auto flex max-h-[94vh] max-w-2xl flex-col overflow-hidden rounded-xl border border-[#d4af37]/20 bg-[#1f2020] shadow-2xl">
+            <div className="relative aspect-[16/10] bg-[#353535]">
               <Image
                 src={selected.mainImageUrl ?? "/placeholders/food.svg"}
                 alt={selected.name}
@@ -266,7 +231,7 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
                 type="button"
                 size="icon"
                 variant="outline"
-                className="absolute right-3 top-3 bg-card"
+                className="absolute right-3 top-3 bg-[#1f2020] text-[#f2ca50]"
                 onClick={() => setSelected(null)}
                 aria-label="Kapat"
               >
@@ -275,12 +240,12 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
             </div>
             <div className="overflow-y-auto p-5">
               <div className="flex items-start justify-between gap-4">
-                <h2 className="font-serif text-3xl">{selected.name}</h2>
-                <p className="text-2xl font-bold text-accent sm:text-3xl">
+                <h2 className="font-serif text-3xl text-[#d4af37]">{selected.name}</h2>
+                <p className="text-2xl font-bold text-[#f2ca50] sm:text-3xl">
                   {formatPrice(selected.price, selected.currency, locale === "tr" ? "tr-TR" : locale)}
                 </p>
               </div>
-              <p className="mt-3 leading-7 text-muted-foreground">
+              <p className="mt-3 leading-7 text-[#d0c5af]/75">
                 {selected.detailedDescription || selected.shortDescription}
               </p>
               {selected.ingredients ? <Detail title={t(locale, "ingredients")} value={selected.ingredients} /> : null}
@@ -305,8 +270,8 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
                 ) : null}
               </div>
               <TagList title={t(locale, "allergens")} values={selected.allergens.map((item) => item.name ?? item.key)} />
-              <TagList title={t(locale, "dietary")} values={selected.dietaryTags.map((item) => item.name ?? item.key)} />
-              <p className="mt-5 rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
+              <TagList title={t(locale, "dietary")} values={visibleDietaryTags(selected).map((item) => item.name ?? item.key)} />
+              <p className="mt-5 rounded-md border border-[#99907c]/20 bg-[#353535]/60 p-3 text-sm text-[#d0c5af]/75">
                 {t(locale, "notice")}
               </p>
             </div>
@@ -317,19 +282,75 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
   );
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
-  return <span className="rounded-md bg-card/95 px-2 py-1 text-xs font-medium text-primary shadow-sm">{children}</span>;
+function SearchField({
+  locale,
+  query,
+  setQuery
+}: {
+  locale: Locale;
+  query: string;
+  setQuery: (value: string) => void;
+}) {
+  return (
+    <label className="relative block flex-1">
+      <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#99907c]" />
+      <Input
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder={t(locale, "search")}
+        className="h-12 rounded-full border-[#d4af37]/10 bg-[#1f2020] pl-12 text-[#e4e2e1] shadow-xl placeholder:text-[#d0c5af]/40 focus-visible:ring-[#d4af37]"
+      />
+    </label>
+  );
 }
 
-function MobileBadge({ children }: { children: React.ReactNode }) {
-  return <span className="rounded-md bg-accent/10 px-2 py-1 text-xs font-medium text-accent sm:hidden">{children}</span>;
+function FilterGrid({ filters, toggleFilter }: { filters: string[]; toggleFilter: (key: string) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {quickFilters.map(({ key, label, icon: Icon }) => (
+        <FilterButton key={key} active={filters.includes(key)} onClick={() => toggleFilter(key)}>
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="truncate">{label}</span>
+        </FilterButton>
+      ))}
+    </div>
+  );
+}
+
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition ${
+        active
+          ? "border-[#f2ca50] bg-[#f2ca50]/10 text-[#f2ca50]"
+          : "border-[#99907c]/30 bg-transparent text-[#d0c5af] hover:border-[#d4af37]/50 hover:text-[#f2ca50]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Badge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded border border-[#d4af37]/30 bg-[#d4af37]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#f2ca50]">
+      {children}
+    </span>
+  );
+}
+
+function visibleDietaryTags(product: Product) {
+  if (!product.isFeatured) return product.dietaryTags;
+  return product.dietaryTags.filter((tag) => tag.key !== "chef");
 }
 
 function Detail({ title, value, icon }: { title: string; value: string; icon?: React.ReactNode }) {
   return (
     <div className="mt-5">
-      <h3 className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</h3>
-      <p className="mt-1 text-sm leading-6 text-muted-foreground">{value}</p>
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-[#e4e2e1]">{icon}{title}</h3>
+      <p className="mt-1 text-sm leading-6 text-[#d0c5af]/75">{value}</p>
     </div>
   );
 }
@@ -349,10 +370,10 @@ function TagList({ title, values }: { title: string; values: string[] }) {
   if (!values.length) return null;
   return (
     <div className="mt-5">
-      <h3 className="text-sm font-semibold">{title}</h3>
+      <h3 className="text-sm font-semibold text-[#e4e2e1]">{title}</h3>
       <div className="mt-2 flex flex-wrap gap-2">
         {values.map((value) => (
-          <span key={value} className="rounded-md bg-muted px-2 py-1 text-xs">
+          <span key={value} className="rounded border border-[#99907c]/30 px-2 py-1 text-xs text-[#d0c5af]">
             {value}
           </span>
         ))}
