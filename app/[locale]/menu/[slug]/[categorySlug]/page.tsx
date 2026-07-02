@@ -33,6 +33,7 @@ export default async function CategoryMenuPage({
         coverImageUrl: data.business?.coverImageUrl
       }}
       menuTitle={data.category.label}
+      menuHeroTitle={data.menu?.heroTitle}
       menuDescription={data.category.description}
       menuImageUrl={data.category.imageUrl}
       backHref={`/${locale}/menu/${slug}`}

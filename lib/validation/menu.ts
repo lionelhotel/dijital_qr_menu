@@ -37,6 +37,11 @@ export const menuSchema = z.object({
     en: z.string().trim().default(""),
     es: z.string().trim().default("")
   }),
+  heroTitle: z.object({
+    tr: z.string().trim().default(""),
+    en: z.string().trim().default(""),
+    es: z.string().trim().default("")
+  }),
   slug: z.string().trim().min(2),
   imageUrl: mediaUrlSchema,
   sortOrder: z.coerce.number().int().default(0),

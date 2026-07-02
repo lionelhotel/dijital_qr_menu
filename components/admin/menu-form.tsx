@@ -10,6 +10,7 @@ export type MenuTranslation = {
   locale: string;
   name: string;
   description: string | null;
+  heroTitle?: string | null;
 };
 
 export type MenuFormMenu = {
@@ -105,7 +106,31 @@ export function MenuForm({
         </div>
       </Section>
 
-      <Section number="2" title="Adres ve durum">
+      <Section number="2" title="Kapak basligi">
+        <div className="grid gap-3 xl:grid-cols-3">
+          <LabeledField label="Turkce kapak basligi">
+            <Input name="heroTitle_tr" defaultValue={tr?.heroTitle ?? ""} placeholder="Gourmet Deneyimi" />
+          </LabeledField>
+          <TranslatedInputField
+            label="Ingilizce kapak basligi"
+            name="heroTitle_en"
+            sourceName="heroTitle_tr"
+            targetLocale="en"
+            defaultValue={en?.heroTitle ?? ""}
+            placeholder="Gourmet Experience"
+          />
+          <TranslatedInputField
+            label="Ispanyolca kapak basligi"
+            name="heroTitle_es"
+            sourceName="heroTitle_tr"
+            targetLocale="es"
+            defaultValue={es?.heroTitle ?? ""}
+            placeholder="Experiencia Gourmet"
+          />
+        </div>
+      </Section>
+
+      <Section number="3" title="Adres ve durum">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_140px_160px]">
           <LabeledField label="URL slug">
             <Input name="slug" defaultValue={menu?.slug} />
@@ -120,7 +145,7 @@ export function MenuForm({
         </div>
       </Section>
 
-      <Section number="3" title="Menü görseli">
+      <Section number="4" title="Menu gorseli">
         <MediaPickerField
           name="imageUrl"
           defaultValue={menu?.imageUrl ?? ""}

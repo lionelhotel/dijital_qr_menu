@@ -186,6 +186,7 @@ model MenuTranslation {
   locale      String
   name        String
   description String?
+  heroTitle   String?
   slug        String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

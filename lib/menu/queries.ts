@@ -76,6 +76,7 @@ export async function getPublicMenus(locale: Locale) {
       ...menu,
       label: pick(menu.translations, locale, "name"),
       description: pick(menu.translations, locale, "description"),
+      heroTitle: pick(menu.translations, locale, "heroTitle"),
       localizedSlug: pick(menu.translations, locale, "slug") ?? menu.slug
     }))
   };

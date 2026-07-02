@@ -65,7 +65,8 @@ export default async function MenusPage({
     translations: menu.translations.map((translation) => ({
       locale: translation.locale,
       name: translation.name,
-      description: translation.description
+      description: translation.description,
+      heroTitle: translation.heroTitle
     }))
   }));
 

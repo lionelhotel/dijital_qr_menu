@@ -1,5 +1,5 @@
-import { Download, Search, Upload } from "lucide-react";
-import { createProductAction, importProductsExcelAction } from "@/lib/admin/actions";
+import { Download, RefreshCw, Search, Upload } from "lucide-react";
+import { createProductAction, importProductsExcelAction, syncProductLabelsFromContentAction } from "@/lib/admin/actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -107,11 +107,17 @@ export default async function ProductsPage({
                 Mevcut ürünleri aynı formatta dışarı aktarın veya düzenlediğiniz Excel dosyasını içeri alın.
               </p>
             </div>
-            <div className="grid gap-3 md:grid-cols-[auto_1fr]">
+            <div className="grid gap-3 md:grid-cols-[auto_auto_1fr]">
               <form action="/api/admin/products/export" method="get">
                 <Button type="submit" variant="outline" className="w-full">
                   <Download className="h-4 w-4" />
                   Excel export
+                </Button>
+              </form>
+              <form action={syncProductLabelsFromContentAction}>
+                <Button type="submit" variant="outline" className="w-full">
+                  <RefreshCw className="h-4 w-4" />
+                  Alerjen/etiket düzelt
                 </Button>
               </form>
               <form action={importProductsExcelAction} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">

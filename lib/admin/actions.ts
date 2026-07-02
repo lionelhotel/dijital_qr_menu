@@ -5,6 +5,7 @@ import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit/audit";
 import { errorMessage } from "@/lib/admin/error-message";
 import { importProductsXlsx } from "@/lib/admin/product-excel";
+import { contentManagedDietaryKeys, inferAllergenKeys, inferDietaryTagKeys, type ProductLabelInput } from "@/lib/admin/product-labels";
 import { setAdminFlash } from "@/lib/admin/flash";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
@@ -16,20 +17,6 @@ import { categorySchema, menuSchema, productSchema } from "@/lib/validation/menu
 
 const locales = ["tr", "en", "es"] as const;
 
-const allergenKeywords: Record<string, string[]> = {
-  gluten: ["gluten", "buğday", "bugday", "un", "ekmek", "kruton", "pasta", "makarna", "wheat", "flour", "bread"],
-  milk: ["süt", "sut", "peynir", "tereyağı", "tereyagi", "krema", "yoğurt", "yogurt", "milk", "cheese", "butter", "cream"],
-  egg: ["yumurta", "egg", "mayonez", "mayonnaise"],
-  peanut: ["yer fıstığı", "yer fistigi", "peanut"],
-  nuts: ["fındık", "findik", "badem", "ceviz", "antep fıstığı", "almond", "walnut", "hazelnut", "pistachio"],
-  soy: ["soya", "soy"],
-  fish: ["balık", "balik", "somon", "fish", "salmon"],
-  shellfish: ["karides", "midye", "istiridye", "shellfish", "shrimp", "mussel"],
-  sesame: ["susam", "sesame"],
-  mustard: ["hardal", "mustard"],
-  celery: ["kereviz", "celery"],
-  sulfite: ["sülfit", "sulfit", "sulfite", "şarap", "sarap", "wine"]
-};
 
 export async function createMenuAction(formData: FormData) {
   const user = await requireAdmin();
@@ -54,6 +41,7 @@ export async function createMenuAction(formData: FormData) {
           locale,
           name: parsed.name[locale],
           description: parsed.description[locale],
+          heroTitle: parsed.heroTitle[locale],
           slug: slugify(parsed.name[locale])
         }))
       }
@@ -90,12 +78,14 @@ export async function updateMenuAction(formData: FormData) {
           update: {
             name: parsed.name[locale],
             description: parsed.description[locale],
+            heroTitle: parsed.heroTitle[locale],
             slug: slugify(parsed.name[locale])
           },
           create: {
             locale,
             name: parsed.name[locale],
             description: parsed.description[locale],
+            heroTitle: parsed.heroTitle[locale],
             slug: slugify(parsed.name[locale])
           }
         }))
@@ -169,7 +159,7 @@ export async function createProductAction(formData: FormData) {
   const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1200, height: 900 })) || parsed.imageUrl || undefined;
   const menuIds = readMany(formData, "menuIds");
   const allergenIds = await resolveAllergenIds(formData, parsed);
-  const dietaryTagIds = readMany(formData, "dietaryTagIds");
+  const dietaryTagIds = await resolveDietaryTagIds(formData, parsed, allergenIds);
   const isFeatured = await hasChefDietaryTag(dietaryTagIds);
 
   const product = await prisma.product.create({
@@ -204,7 +194,7 @@ export async function updateProductAction(formData: FormData) {
   const imageUrl = (await uploadedImageUrl(formData, "image", user.id, { width: 1200, height: 900 })) || parsed.imageUrl || undefined;
   const menuIds = readMany(formData, "menuIds");
   const allergenIds = await resolveAllergenIds(formData, parsed);
-  const dietaryTagIds = readMany(formData, "dietaryTagIds");
+  const dietaryTagIds = await resolveDietaryTagIds(formData, parsed, allergenIds);
   const isFeatured = await hasChefDietaryTag(dietaryTagIds);
 
   await prisma.$transaction([
@@ -236,6 +226,66 @@ export async function updateProductAction(formData: FormData) {
 
   await logAndRevalidate(user.id, AuditAction.UPDATE, "Product", id, parsed);
   if (!parsed.calories) await maybeCalculateAndStoreNutrition(id);
+}
+
+export async function syncProductLabelsFromContentAction() {
+  const user = await requireAdmin();
+  const [products, allergens, dietaryTags] = await Promise.all([
+    prisma.product.findMany({
+      where: { deletedAt: null },
+      include: {
+        translations: true,
+        dietaryTags: { include: { dietary: true } }
+      }
+    }),
+    prisma.allergen.findMany({ where: { deletedAt: null }, select: { id: true, key: true } }),
+    prisma.dietaryTag.findMany({ where: { deletedAt: null }, select: { id: true, key: true } })
+  ]);
+
+  const allergenByKey = new Map(allergens.map((item) => [item.key, item.id]));
+  const dietaryByKey = new Map(dietaryTags.map((item) => [item.key, item.id]));
+  const contentManagedDietaryIds = dietaryTags
+    .filter((item) => contentManagedDietaryKeys.has(item.key))
+    .map((item) => item.id);
+
+  for (const product of products) {
+    const input = productLabelInputFromTranslations(product.translations, product.spicyLevel);
+    const allergenIds = inferAllergenKeys(input)
+      .map((key) => allergenByKey.get(key))
+      .filter(Boolean) as string[];
+    const allergenKeys = inferAllergenKeys(input);
+    const dietaryIds = inferDietaryTagKeys(input, allergenKeys)
+      .map((key) => dietaryByKey.get(key))
+      .filter(Boolean) as string[];
+
+    await prisma.$transaction([
+      prisma.productAllergen.deleteMany({ where: { productId: product.id } }),
+      ...(allergenIds.length
+        ? [
+            prisma.productAllergen.createMany({
+              data: allergenIds.map((allergenId) => ({ productId: product.id, allergenId })),
+              skipDuplicates: true
+            })
+          ]
+        : []),
+      prisma.productDietaryTag.deleteMany({
+        where: {
+          productId: product.id,
+          dietaryId: { in: contentManagedDietaryIds }
+        }
+      }),
+      ...(dietaryIds.length
+        ? [
+            prisma.productDietaryTag.createMany({
+              data: dietaryIds.map((dietaryId) => ({ productId: product.id, dietaryId })),
+              skipDuplicates: true
+            })
+          ]
+        : [])
+    ]);
+  }
+
+  await logAndRevalidate(user.id, AuditAction.UPDATE, "Product:labels", undefined, { productCount: products.length });
 }
 
 export async function calculateProductNutritionAction(formData: FormData) {
@@ -398,6 +448,34 @@ export async function deleteDietaryTagAction(formData: FormData) {
 
 export async function updateSettingsAction(formData: FormData) {
   await saveSettings(formData);
+}
+
+export async function toggleDarkModeAction(formData: FormData) {
+  const user = await requireAdmin();
+  const enabled = formData.get("darkModeEnabled") === "on";
+  const existing = await prisma.themeSetting.findFirst({ orderBy: { createdAt: "asc" } });
+
+  const theme = await prisma.themeSetting.upsert({
+    where: { id: existing?.id ?? "default-theme" },
+    update: {
+      darkModeEnabled: enabled,
+      updatedBy: user.id
+    },
+    create: {
+      id: "default-theme",
+      primaryColor: "#2B2926",
+      accentColor: "#A8844F",
+      backgroundColor: "#F7F4EE",
+      cardColor: "#FFFFFF",
+      textColor: "#2B2926",
+      radius: 8,
+      darkModeEnabled: enabled,
+      createdBy: user.id
+    }
+  });
+
+  await logAndRevalidate(user.id, AuditAction.SETTINGS_CHANGE, "ThemeSetting", theme.id, { darkModeEnabled: enabled });
+  revalidatePath("/", "layout");
 }
 
 export async function saveSettings(formData: FormData) {
@@ -712,6 +790,7 @@ function readMenuForm(formData: FormData) {
   return {
     name,
     description: readLocalized(formData, "description"),
+    heroTitle: readOptionalLocalized(formData, "heroTitle"),
     slug: String(formData.get("slug") || slugify(name.en || name.tr)),
     imageUrl: String(formData.get("imageUrl") || ""),
     sortOrder: Number(formData.get("sortOrder") ?? 0),
@@ -976,15 +1055,74 @@ async function resolveAllergenIds(
     name: Record<(typeof locales)[number], string>;
     shortDescription: Record<(typeof locales)[number], string>;
     ingredients: Record<(typeof locales)[number], string>;
+    spicyLevel?: number | null;
   }
 ) {
   const manualIds = readMany(formData, "allergenIds");
-  const text = `${parsed.name.tr} ${parsed.name.en} ${parsed.name.es} ${parsed.shortDescription.tr} ${parsed.shortDescription.en} ${parsed.shortDescription.es} ${parsed.ingredients.tr} ${parsed.ingredients.en} ${parsed.ingredients.es}`.toLowerCase();
-  const detectedKeys = Object.entries(allergenKeywords)
-    .filter(([, keywords]) => keywords.some((keyword) => text.includes(keyword.toLowerCase())))
-    .map(([key]) => key);
+  const detectedKeys = inferAllergenKeys(toProductLabelInput(parsed));
   const detected = await prisma.allergen.findMany({ where: { key: { in: detectedKeys }, deletedAt: null } });
   return [...new Set([...manualIds, ...detected.map((item) => item.id)])];
+}
+
+async function resolveDietaryTagIds(
+  formData: FormData,
+  parsed: {
+    name: Record<(typeof locales)[number], string>;
+    shortDescription: Record<(typeof locales)[number], string>;
+    ingredients: Record<(typeof locales)[number], string>;
+    spicyLevel?: number | null;
+  },
+  allergenIds: string[]
+) {
+  const manualIds = readMany(formData, "dietaryTagIds");
+  const allergens = await prisma.allergen.findMany({ where: { id: { in: allergenIds }, deletedAt: null }, select: { key: true } });
+  const detectedKeys = inferDietaryTagKeys(toProductLabelInput(parsed), allergens.map((item) => item.key));
+  const detected = await prisma.dietaryTag.findMany({ where: { key: { in: detectedKeys }, deletedAt: null } });
+  return [...new Set([...manualIds, ...detected.map((item) => item.id)])];
+}
+
+function toProductLabelInput(parsed: {
+  name: Record<(typeof locales)[number], string>;
+  shortDescription: Record<(typeof locales)[number], string>;
+  ingredients: Record<(typeof locales)[number], string>;
+  spicyLevel?: number | null;
+}): ProductLabelInput {
+  return {
+    name: parsed.name,
+    shortDescription: parsed.shortDescription,
+    ingredients: parsed.ingredients,
+    spicyLevel: parsed.spicyLevel ?? 0
+  };
+}
+
+function productLabelInputFromTranslations(
+  translations: {
+    locale: string;
+    name: string;
+    shortDescription: string | null;
+    ingredients: string | null;
+  }[],
+  spicyLevel?: number | null
+): ProductLabelInput {
+  const byLocale = new Map(translations.map((item) => [item.locale, item]));
+  return {
+    name: {
+      tr: byLocale.get("tr")?.name ?? "",
+      en: byLocale.get("en")?.name ?? "",
+      es: byLocale.get("es")?.name ?? ""
+    },
+    shortDescription: {
+      tr: byLocale.get("tr")?.shortDescription ?? "",
+      en: byLocale.get("en")?.shortDescription ?? "",
+      es: byLocale.get("es")?.shortDescription ?? ""
+    },
+    ingredients: {
+      tr: byLocale.get("tr")?.ingredients ?? "",
+      en: byLocale.get("en")?.ingredients ?? "",
+      es: byLocale.get("es")?.ingredients ?? ""
+    },
+    spicyLevel: spicyLevel ?? 0
+  };
 }
 
 async function logAndRevalidate(

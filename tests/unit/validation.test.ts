@@ -24,6 +24,7 @@ describe("productSchema", () => {
     const menu = menuSchema.safeParse({
       name: { tr: "A", en: "A", es: "A" },
       description: { tr: "", en: "", es: "" },
+      heroTitle: { tr: "", en: "", es: "" },
       slug: "menu",
       imageUrl: "/api/media/00000000-0000-0000-0000-000000000000.webp"
     });

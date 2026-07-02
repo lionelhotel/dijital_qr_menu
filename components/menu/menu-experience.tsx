@@ -49,6 +49,7 @@ type MenuExperienceProps = {
   };
   categories: Category[];
   menuTitle?: string | null;
+  menuHeroTitle?: string | null;
   menuDescription?: string | null;
   menuImageUrl?: string | null;
   backHref?: string;
@@ -61,7 +62,7 @@ const quickFilters = [
   { key: "available", label: "Mevcut", icon: BadgeCheck }
 ];
 
-export function MenuExperience({ locale, business, categories, menuTitle, menuDescription, menuImageUrl, backHref }: MenuExperienceProps) {
+export function MenuExperience({ locale, business, categories, menuTitle, menuHeroTitle, menuDescription, menuImageUrl, backHref }: MenuExperienceProps) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<string[]>([]);
   const [selected, setSelected] = useState<Product | null>(null);
@@ -127,7 +128,9 @@ export function MenuExperience({ locale, business, categories, menuTitle, menuDe
             <div className="mb-2 flex items-center gap-2">
               <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#f2ca50]">{menuTitle ?? business.businessName}</span>
             </div>
-            <h1 className="font-serif text-3xl font-semibold leading-tight text-[#ffe088] sm:text-5xl">Gourmet Deneyimi</h1>
+            <h1 className="font-serif text-3xl font-semibold leading-tight text-[#ffe088] sm:text-5xl">
+              {menuHeroTitle || defaultHeroTitle(locale)}
+            </h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[#d0c5af]/82 sm:text-base">
               {menuDescription || t(locale, "welcomeSub")}
             </p>
@@ -357,6 +360,12 @@ function spicyText(locale: Locale) {
   if (locale === "en") return "Spicy";
   if (locale === "es") return "Picante";
   return "Acılı";
+}
+
+function defaultHeroTitle(locale: Locale) {
+  if (locale === "en") return "Gourmet Experience";
+  if (locale === "es") return "Experiencia Gourmet";
+  return "Gourmet Deneyimi";
 }
 
 function TagList({ title, values }: { title: string; values: string[] }) {
